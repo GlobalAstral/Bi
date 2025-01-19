@@ -11,8 +11,12 @@ Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine() {
       if (try_consume(Tokens::TokenType::CLOSE_ANGLE)) break;
       if (!try_consume(Tokens::TokenType::COMMA)) Errors::error("Comma expected between identifiers", peek(-1)->line);
     }
-  while (!try_consume(Tokens::TokenType::PREPROCESSOR))
+  bool notFound = false;
+  while ((notFound = !try_consume(Tokens::TokenType::PREPROCESSOR))) {
+    if (_peek == this->content.size()-1) break;
     def.content.push(consume());
+  }
+  if (notFound) Errors::error("Expected '#'");
   return def;
 }
 
