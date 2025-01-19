@@ -18,6 +18,7 @@ namespace Preprocessor {
         this->content = tokens;
       }
       Lists::List<Tokens::Token*> preprocess();
+      Definition preprocessDefine();
     private:
       int _peek = 0;
       Lists::List<Tokens::Token*> content;

@@ -17,7 +17,11 @@ namespace Tokens {
     LESS,
     GREATER,
     OPEN_ANGLE = 9,
-    CLOSE_ANGLE = 10
+    CLOSE_ANGLE,
+    OPEN_SQUARE,
+    CLOSE_SQUARE,
+    OPEN_BRACKET,
+    CLOSE_BRACKET
   };
 
   struct Token {

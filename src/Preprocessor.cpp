@@ -1,5 +1,21 @@
 #include <Preprocessor.hpp>
 
+Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine() {
+  if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
+  Definition def;
+  Tokens::Token* ident = consume();
+  def.name = ident->value;
+  if (try_consume(Tokens::TokenType::OPEN_ANGLE))
+    while (peek()->type == Tokens::TokenType::IDENTIFIER) {
+      def.params.push(consume());
+      if (try_consume(Tokens::TokenType::CLOSE_ANGLE)) break;
+      if (!try_consume(Tokens::TokenType::COMMA)) Errors::error("Comma expected between identifiers", peek(-1)->line);
+    }
+  while (!try_consume(Tokens::TokenType::PREPROCESSOR))
+    def.content.push(consume());
+  return def;
+}
+
 Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocess() {
   Lists::List<Tokens::Token*> ret{};
   Lists::List<Definition> definitions{[](Definition A, Definition B){return A.name == B.name;}};
@@ -7,19 +23,7 @@ Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocess() {
   while (_peek < content.size()) {
     if (try_consume(Tokens::TokenType::PREPROCESSOR)) {
       if (try_consume(Tokens::TokenType::DEFINE)) {
-        if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
-        Definition def;
-        Tokens::Token* ident = consume();
-        def.name = ident->value;
-        if (try_consume(Tokens::TokenType::OPEN_ANGLE))
-          while (peek()->type == Tokens::TokenType::IDENTIFIER) {
-            def.params.push(consume());
-            if (try_consume(Tokens::TokenType::CLOSE_ANGLE)) break;
-            if (!try_consume(Tokens::TokenType::COMMA)) Errors::error("Comma expected between identifiers", peek(-1)->line);
-          }
-        while (!try_consume(Tokens::TokenType::PREPROCESSOR))
-          def.content.push(consume());
-        definitions.push(def);
+        definitions.push(preprocessDefine());
       }
     } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
       Tokens::Token* ident = consume();

@@ -37,6 +37,12 @@ std::string Tokens::Token::toString() {
     case TokenType::CLOSE_ANGLE:
       ss << "CLOSE_ANGLE";
       break;
+    case TokenType::OPEN_SQUARE:
+      ss << "CLOSE_SQUARE";
+      break;
+    case TokenType::CLOSE_SQUARE:
+      ss << "CLOSE_SQUARE";
+      break;
     default:
       ss << "NULL";
       break;
@@ -74,6 +80,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::GREATER, line, ""});
     } else if (try_consume('<')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::LESS, line, ""});
+    } else if (try_consume('[')) {
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_SQUARE, line, ""});
+    } else if (try_consume(']')) {
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_SQUARE, line, ""});
+    } else if (try_consume('{')) {
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_BRACKET, line, ""});
+    } else if (try_consume('}')) {
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line, ""});
     } else {
       if (isalpha(peek())) {
         std::string buf = "";
