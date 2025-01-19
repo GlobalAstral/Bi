@@ -9,7 +9,7 @@ namespace Tokens {
     MEMBOX,
     DEFINE,
     IDENTIFIER,
-    INTEGER,
+    NUMBER,
     FLOATING,
     OPEN_PAREN,
     CLOSE_PAREN,

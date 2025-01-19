@@ -16,8 +16,8 @@ std::string Tokens::Token::toString() {
     case TokenType::IDENTIFIER:
       ss << "IDENTIFIER";
       break;
-    case TokenType::INTEGER:
-      ss << "INTEGER";
+    case TokenType::NUMBER:
+      ss << "NUMBER";
       break;
     case TokenType::FLOATING:
       ss << "FLOATING";
@@ -103,7 +103,7 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }
       } else {
-        Tokens::TokenType tok = TokenType::INTEGER;
+        Tokens::TokenType tok = TokenType::NUMBER;
         std::string buf = "";
         while (isdigit(peek())) {
           buf += consume();
