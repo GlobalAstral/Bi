@@ -36,7 +36,6 @@ Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocess() {
           if (try_consume(Tokens::TokenType::COMMA)) {
             Lists::List<Tokens::Token*> tmp = buf->copy();
             map.set(def.params.at(paramIndex), &tmp);
-            std::cout << map.toString();
             paramIndex++;
             buf->reset();
           } else
@@ -44,16 +43,13 @@ Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocess() {
         }
         Lists::List<Tokens::Token*> tmp = buf->copy();
         map.set(def.params.at(paramIndex), &tmp);
-        std::cout << map.toString();
         paramIndex++;
         buf->reset();
-        std::cout << map.toString();
 
         for (int i = 0; i < def.content.size(); i++) {
           if (def.content.at(i)->type != Tokens::TokenType::IDENTIFIER) continue;
           Tokens::Token* ident = def.content.at(i);
           if (!map.contains(ident)) continue;
-          std::cout << map.toString();
           Lists::List<Tokens::Token*>* replace = map.get(ident);
           temp.pop(i);
           for (int j = replace->last(); j >= 0; j--)
