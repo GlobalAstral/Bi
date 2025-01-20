@@ -38,10 +38,19 @@ std::string Tokens::Token::toString() {
       ss << "CLOSE_ANGLE";
       break;
     case TokenType::OPEN_SQUARE:
-      ss << "CLOSE_SQUARE";
+      ss << "OPEN_SQUARE";
       break;
     case TokenType::CLOSE_SQUARE:
       ss << "CLOSE_SQUARE";
+      break;
+    case TokenType::OPEN_BRACKET:
+      ss << "OPEN_BRACKET";
+      break;
+    case TokenType::CLOSE_BRACKET:
+      ss << "CLOSE_BRACKET";
+      break;
+    case TokenType::UNDEFINE:
+      ss << "UNDEFINE";
       break;
     default:
       ss << "NULL";
@@ -99,6 +108,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::MEMBOX, line, ""});
         } else if (buf == "define") {
           tokens.push(new Tokens::Token{Tokens::TokenType::DEFINE, line, ""});
+        } else if (buf == "undefine") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::UNDEFINE, line, ""});
         } else {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }

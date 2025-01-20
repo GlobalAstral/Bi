@@ -8,6 +8,7 @@ namespace Tokens {
     PREPROCESSOR,
     MEMBOX,
     DEFINE,
+    UNDEFINE,
     IDENTIFIER,
     NUMBER,
     FLOATING,

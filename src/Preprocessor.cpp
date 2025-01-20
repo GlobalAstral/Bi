@@ -31,11 +31,19 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
       if (definitions.contains(nominativeDef(ident->value)))
         Errors::error("Definition already exists");
       definitions.push(preprocessDefine(ident));
+    } else if (try_consume(Tokens::TokenType::UNDEFINE)) {
+      if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
+      Tokens::Token* ident = consume();
+      if (!definitions.contains(nominativeDef(ident->value)))
+        Errors::error("Definition does not exists");
+      definitions.pop(definitions.index(nominativeDef(ident->value)));
     }
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
-    if (!definitions.contains(nominativeDef(ident->value)))
+    if (!definitions.contains(nominativeDef(ident->value))) {
+      ret.push(ident);
       return;
+    }
 
     Definition def = definitions.at(definitions.index(nominativeDef(ident->value)));
     Lists::List<Tokens::Token*> temp = def.content.copy();
