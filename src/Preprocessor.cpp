@@ -23,6 +23,30 @@ Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine(Tokens::To
   return def;
 }
 
+bool Preprocessor::Preprocessor::isComputable(Lists::List<Definition>& definitions) {
+  int prev = _peek;
+  if (compute(definitions)->type == Tokens::TokenType::NULL_TOKEN) {
+    _peek = prev;
+    return false;
+  }
+  _peek = prev;
+  return true;
+}
+
+Tokens::Token* Preprocessor::Preprocessor::compute(Lists::List<Definition>& definitions) {
+  if (try_consume(Tokens::TokenType::NOT)) {
+    Tokens::Token* tok = compute(definitions);
+    std::string val = (tok->value == "0") ? "1" : "0";
+    return new Tokens::Token{Tokens::TokenType::NUMBER, tok->line, val};
+  } else if (try_consume(Tokens::TokenType::DEFINED)) {
+    if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier");
+    Tokens::Token* ident = consume();
+    std::string val = (definitions.contains(nominativeDef(ident->value))) ? "1" : "0";
+    return new Tokens::Token{Tokens::TokenType::NUMBER, ident->line, val};
+  }
+  return new Tokens::Token{Tokens::TokenType::NULL_TOKEN, -1, ""};
+}
+
 void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition>& definitions) {
   if (try_consume(Tokens::TokenType::PREPROCESSOR)) {
     if (try_consume(Tokens::TokenType::DEFINE)) {
@@ -78,6 +102,8 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
   
     for (int i = 0; i < temp.size(); i++)
       ret.push(temp.at(i));
+  } else if (isComputable(definitions)) {
+    ret.push(compute(definitions));
   } else {
     ret.push(consume());
   }

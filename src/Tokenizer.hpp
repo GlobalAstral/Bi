@@ -23,6 +23,9 @@ namespace Tokens {
     CLOSE_SQUARE,
     OPEN_BRACKET,
     CLOSE_BRACKET,
+    DEFINED,
+    NOT,
+    NULL_TOKEN
   };
 
   struct Token {

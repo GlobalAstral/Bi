@@ -52,6 +52,12 @@ std::string Tokens::Token::toString() {
     case TokenType::UNDEFINE:
       ss << "UNDEFINE";
       break;
+    case TokenType::DEFINED:
+      ss << "DEFINED";
+      break;
+    case TokenType::NOT:
+      ss << "NOT";
+      break;
     default:
       ss << "NULL";
       break;
@@ -110,6 +116,10 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::DEFINE, line, ""});
         } else if (buf == "undefine") {
           tokens.push(new Tokens::Token{Tokens::TokenType::UNDEFINE, line, ""});
+        } else if (buf == "defined") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::DEFINED, line, ""});
+        } else if (buf == "not") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::NOT, line, ""});
         } else {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }
