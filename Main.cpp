@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     cout << tokens.at(i)->toString() << endl;
 
   Preprocessor::Preprocessor preprocessor(tokens);
-  Lists::List<Tokens::Token*> preprocessed = preprocessor.preprocess();
+  Lists::List<Tokens::Token*> preprocessed = preprocessor.preprocessAll();
   cout << endl << "PREPROCESSED TOKENS:" << endl;
   for (int i = 0; i < preprocessed.size(); i++)
     cout << preprocessed.at(i)->toString() << endl;

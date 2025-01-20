@@ -1,9 +1,12 @@
 #include <Preprocessor.hpp>
 
-Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine() {
-  if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
+Preprocessor::Definition nominativeDef(std::string name) {
+  return {name, Lists::List<Tokens::Token*>{}, Lists::List<Tokens::Token*>{}};
+}
+
+Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine(Tokens::Token* ident) {
   Definition def;
-  Tokens::Token* ident = consume();
+  
   def.name = ident->value;
   if (try_consume(Tokens::TokenType::OPEN_ANGLE))
     while (peek()->type == Tokens::TokenType::IDENTIFIER) {
@@ -20,56 +23,64 @@ Preprocessor::Definition Preprocessor::Preprocessor::preprocessDefine() {
   return def;
 }
 
-Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocess() {
+void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition>& definitions) {
+  if (try_consume(Tokens::TokenType::PREPROCESSOR)) {
+    if (try_consume(Tokens::TokenType::DEFINE)) {
+      if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
+      Tokens::Token* ident = consume();
+      if (definitions.contains(nominativeDef(ident->value)))
+        Errors::error("Definition already exists");
+      definitions.push(preprocessDefine(ident));
+    }
+  } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
+    Tokens::Token* ident = consume();
+    if (!definitions.contains(nominativeDef(ident->value)))
+      return;
+
+    Definition def = definitions.at(definitions.index(nominativeDef(ident->value)));
+    Lists::List<Tokens::Token*> temp = def.content.copy();
+    Dict::Dict<Tokens::Token*, Lists::List<Tokens::Token*>*> map{[](Tokens::Token* a, Tokens::Token* b){return (a->type == b->type) && (a->value == b->value);}};
+    if (try_consume(Tokens::TokenType::OPEN_ANGLE)) {
+      Lists::List<Tokens::Token*>* buf = new Lists::List<Tokens::Token*>{};
+      int paramIndex = 0;
+      while (!try_consume(Tokens::TokenType::CLOSE_ANGLE)) {
+        if (try_consume(Tokens::TokenType::COMMA)) {
+          Lists::List<Tokens::Token*> tmp = buf->copy();
+          map.set(def.params.at(paramIndex), &tmp);
+          paramIndex++;
+          buf->reset();
+        } else
+          buf->push(consume());
+      }
+      Lists::List<Tokens::Token*> tmp = buf->copy();
+      map.set(def.params.at(paramIndex), &tmp);
+      paramIndex++;
+      buf->reset();
+
+      for (int i = 0; i < def.content.size(); i++) {
+        if (def.content.at(i)->type != Tokens::TokenType::IDENTIFIER) continue;
+        Tokens::Token* ident = def.content.at(i);
+        if (!map.contains(ident)) continue;
+        Lists::List<Tokens::Token*>* replace = map.get(ident);
+        temp.pop(i);
+        for (int j = replace->last(); j >= 0; j--)
+          temp.insert(replace->at(j), i);
+      }
+  }
+  
+    for (int i = 0; i < temp.size(); i++)
+      ret.push(temp.at(i));
+  } else {
+    ret.push(consume());
+  }
+}
+
+Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocessAll() {
   Lists::List<Tokens::Token*> ret{};
   Lists::List<Definition> definitions{[](Definition A, Definition B){return A.name == B.name;}};
 
   while (_peek < content.size()) {
-    if (try_consume(Tokens::TokenType::PREPROCESSOR)) {
-      if (try_consume(Tokens::TokenType::DEFINE)) {
-        definitions.push(preprocessDefine());
-      }
-    } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
-      Tokens::Token* ident = consume();
-      if (!definitions.contains({ident->value, Lists::List<Tokens::Token*>{}, Lists::List<Tokens::Token*>{}}))
-        continue;
-
-      Definition def = definitions.at(definitions.index({ident->value, Lists::List<Tokens::Token*>{}, Lists::List<Tokens::Token*>{}}));
-      Lists::List<Tokens::Token*> temp = def.content.copy();
-      Dict::Dict<Tokens::Token*, Lists::List<Tokens::Token*>*> map{[](Tokens::Token* a, Tokens::Token* b){return (a->type == b->type) && (a->value == b->value);}};
-      if (try_consume(Tokens::TokenType::OPEN_ANGLE)) {
-        Lists::List<Tokens::Token*>* buf = new Lists::List<Tokens::Token*>{};
-        int paramIndex = 0;
-        while (!try_consume(Tokens::TokenType::CLOSE_ANGLE)) {
-          if (try_consume(Tokens::TokenType::COMMA)) {
-            Lists::List<Tokens::Token*> tmp = buf->copy();
-            map.set(def.params.at(paramIndex), &tmp);
-            paramIndex++;
-            buf->reset();
-          } else
-            buf->push(consume());
-        }
-        Lists::List<Tokens::Token*> tmp = buf->copy();
-        map.set(def.params.at(paramIndex), &tmp);
-        paramIndex++;
-        buf->reset();
-
-        for (int i = 0; i < def.content.size(); i++) {
-          if (def.content.at(i)->type != Tokens::TokenType::IDENTIFIER) continue;
-          Tokens::Token* ident = def.content.at(i);
-          if (!map.contains(ident)) continue;
-          Lists::List<Tokens::Token*>* replace = map.get(ident);
-          temp.pop(i);
-          for (int j = replace->last(); j >= 0; j--)
-            temp.insert(replace->at(j), i);
-        }
-    }
-    
-      for (int i = 0; i < temp.size(); i++)
-        ret.push(temp.at(i));
-    } else {
-      ret.push(consume());
-    }
+    preprocess(ret, definitions);
   }
   return ret;
 }
