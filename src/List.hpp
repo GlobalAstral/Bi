@@ -55,7 +55,8 @@ namespace Lists {
 
       bool contains(T item) {
         for (int i = 0; i < this->size(); i++) {
-          if (this->equals_criteria(this->at(i), item))
+          T a = this->at(i);
+          if (this->equals_criteria(a, item))
             return true;
         }
         return false;

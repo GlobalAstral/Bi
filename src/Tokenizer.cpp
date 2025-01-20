@@ -58,6 +58,9 @@ std::string Tokens::Token::toString() {
     case TokenType::NOT:
       ss << "NOT";
       break;
+    case TokenType::IF:
+      ss << "IF";
+      break;
     default:
       ss << "NULL";
       break;
@@ -120,6 +123,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::DEFINED, line, ""});
         } else if (buf == "not") {
           tokens.push(new Tokens::Token{Tokens::TokenType::NOT, line, ""});
+        } else if (buf == "if") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::IF, line, ""});
         } else {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }

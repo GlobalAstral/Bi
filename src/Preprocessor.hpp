@@ -18,10 +18,10 @@ namespace Preprocessor {
         this->content = tokens;
       }
       Lists::List<Tokens::Token*> preprocessAll();
-      void preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition>& definitions);
-      Definition preprocessDefine(Tokens::Token* ident);
-      Tokens::Token* compute(Lists::List<Definition>& definitions);
-      bool isComputable(Lists::List<Definition>& definitions);
+      void preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition*>& definitions);
+      Definition* preprocessDefine(Tokens::Token* ident);
+      Tokens::Token* compute(Lists::List<Definition*>& definitions);
+      bool isComputable(Lists::List<Definition*>& definitions);
     private:
       int _peek = 0;
       Lists::List<Tokens::Token*> content;
@@ -31,8 +31,11 @@ namespace Preprocessor {
       Tokens::Token* consume() {
         return content.at(_peek++);
       }
+      bool hasPeek() {
+        return (_peek < content.size());
+      }
       bool try_consume(Tokens::TokenType type) {
-        if (peek()->type == type) {
+        if (hasPeek() && peek()->type == type) {
           consume();
           return true;
         }
