@@ -16,12 +16,12 @@ namespace Tokens {
     COMMA,
     LESS,
     GREATER,
-    OPEN_ANGLE = 9,
+    OPEN_ANGLE = LESS,
     CLOSE_ANGLE,
     OPEN_SQUARE,
     CLOSE_SQUARE,
     OPEN_BRACKET,
-    CLOSE_BRACKET
+    CLOSE_BRACKET,
   };
 
   struct Token {
