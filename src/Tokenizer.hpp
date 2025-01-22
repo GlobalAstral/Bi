@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <List.hpp>
+#include <Errors.hpp>
 
 namespace Tokens {
   enum class TokenType {
@@ -10,8 +11,14 @@ namespace Tokens {
     DEFINE,
     UNDEFINE,
     IDENTIFIER,
-    NUMBER,
+    INTEGER,
     FLOATING,
+    DOUBLE,
+    LONG,
+    CHARACTER,
+    STRING,
+    BINARY,
+    HEXADECIMAL,
     OPEN_PAREN,
     CLOSE_PAREN,
     COMMA,

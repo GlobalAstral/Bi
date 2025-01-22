@@ -16,11 +16,29 @@ std::string Tokens::Token::toString() {
     case TokenType::IDENTIFIER:
       ss << "IDENTIFIER";
       break;
-    case TokenType::NUMBER:
-      ss << "NUMBER";
+    case TokenType::INTEGER:
+      ss << "INTEGER";
       break;
     case TokenType::FLOATING:
       ss << "FLOATING";
+      break;
+    case TokenType::DOUBLE:
+      ss << "DOUBLE";
+      break;
+    case TokenType::LONG:
+      ss << "LONG";
+      break;
+    case TokenType::CHARACTER:
+      ss << "CHAR";
+      break;
+    case TokenType::STRING:
+      ss << "STRING";
+      break;
+    case TokenType::BINARY:
+      ss << "BINARY";
+      break;
+    case TokenType::HEXADECIMAL:
+      ss << "HEX";
       break;
     case TokenType::OPEN_PAREN:
       ss << "OPEN_PAREN";
@@ -106,6 +124,17 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_BRACKET, line, ""});
     } else if (try_consume('}')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line, ""});
+    } else if (try_consume('\'')) {
+      char buf[1] = {consume()};
+      tokens.push(new Tokens::Token{Tokens::TokenType::CHARACTER, line, std::string(buf)});
+      if (!try_consume('\'')) Errors::error("Expected closing single quote");
+    } else if (try_consume('"')) {
+      std::string buf = "";
+      bool notFound = false;
+      while ((notFound = !try_consume('"')))
+        buf += consume();
+      if (notFound) Errors::error("Expected closing quote");
+      tokens.push(new Tokens::Token{Tokens::TokenType::STRING, line, buf});
     } else {
       if (isalpha(peek())) {
         std::string buf = "";
@@ -129,18 +158,39 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }
       } else {
-        Tokens::TokenType tok = TokenType::NUMBER;
+        Tokens::TokenType tok = TokenType::INTEGER;
         std::string buf = "";
+        bool hex = false;
+        if (peek() == '0') {
+          buf += consume();
+          if (peek() == 'x') {
+            buf += consume();
+            hex = true;
+            tok = TokenType::HEXADECIMAL;
+          }
+        }
         while (isdigit(peek())) {
           buf += consume();
         }
         
         if (peek() == '.') {
+          if (hex) Errors::error("Cannot have float hexadecimal literal");
           buf += consume();
           while (isdigit(peek())) {
             buf += consume();
           }
-          tok = TokenType::FLOATING;
+          tok = TokenType::DOUBLE;
+          if (try_consume('f')) tok = TokenType::FLOATING;
+          if (try_consume('L') || try_consume('b')) Errors::error("Cannot have long or binary float literal");
+        } else {
+          if (try_consume('L'))
+            tok = TokenType::LONG;
+          else if (try_consume('b'))
+            tok = TokenType::BINARY;
+          else if (try_consume('d'))
+            tok = TokenType::DOUBLE;
+          else if (try_consume('f'))
+            tok = TokenType::FLOATING;
         }
         tokens.push(new Tokens::Token{tok, line, std::string(buf)});
       }
