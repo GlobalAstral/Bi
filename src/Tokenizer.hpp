@@ -8,6 +8,7 @@ namespace Tokens {
   enum class TokenType {
     PREPROCESSOR,
     MEMBOX,
+    LABEL,
     DEFINE,
     UNDEFINE,
     IDENTIFIER,
@@ -34,6 +35,8 @@ namespace Tokens {
     NOT,
     NULL_TOKEN,
     IF,
+    METHOD,
+    PUBLIC
   };
 
   struct Token {

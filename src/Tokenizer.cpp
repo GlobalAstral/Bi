@@ -154,6 +154,12 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::NOT, line, ""});
         } else if (buf == "if") {
           tokens.push(new Tokens::Token{Tokens::TokenType::IF, line, ""});
+        } else if (buf == "label") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::LABEL, line, ""});
+        } else if (buf == "method") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::METHOD, line, ""});
+        } else if (buf == "public") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line, ""});
         } else {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }
