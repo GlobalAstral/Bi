@@ -6,6 +6,7 @@
 #include <string.h>
 #include <Tokenizer.hpp>
 #include <Preprocessor.hpp>
+#include <Literal.hpp>
 
 using std::cout;
 using std::endl;
