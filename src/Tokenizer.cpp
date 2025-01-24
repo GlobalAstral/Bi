@@ -16,29 +16,8 @@ std::string Tokens::Token::toString() {
     case TokenType::IDENTIFIER:
       ss << "IDENTIFIER";
       break;
-    case TokenType::INTEGER:
-      ss << "INTEGER";
-      break;
-    case TokenType::FLOATING:
-      ss << "FLOATING";
-      break;
-    case TokenType::DOUBLE:
-      ss << "DOUBLE";
-      break;
-    case TokenType::LONG:
-      ss << "LONG";
-      break;
-    case TokenType::CHARACTER:
-      ss << "CHAR";
-      break;
-    case TokenType::STRING:
-      ss << "STRING";
-      break;
-    case TokenType::BINARY:
-      ss << "BINARY";
-      break;
-    case TokenType::HEXADECIMAL:
-      ss << "HEX";
+    case TokenType::LITERAL:
+      ss << "LITERAL";
       break;
     case TokenType::OPEN_PAREN:
       ss << "OPEN_PAREN";
@@ -84,7 +63,11 @@ std::string Tokens::Token::toString() {
       break;
   }
   ss << " with value '";
-  ss << value;
+  if (this->type == TokenType::LITERAL)
+    ss << this->value.lit.toString();
+  else if (this->type == TokenType::IDENTIFIER)
+    ss << this->value.identifier;
+
   ss << "'";
   ss << " at line ";
   ss << line;
@@ -125,8 +108,7 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
     } else if (try_consume('}')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line});
     } else if (try_consume('\'')) {
-      char buf[1] = {consume()};
-      tokens.push(new Tokens::Token{Tokens::TokenType::CHARACTER, line, std::string(buf)});
+      tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::character, {.c = consume()}}}});
       if (!try_consume('\'')) Errors::error("Expected closing single quote");
     } else if (try_consume('"')) {
       std::string buf = "";
@@ -134,7 +116,7 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       while ((notFound = !try_consume('"')))
         buf += consume();
       if (notFound) Errors::error("Expected closing quote");
-      tokens.push(new Tokens::Token{Tokens::TokenType::STRING, line, buf});
+      tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::string, {.s = const_cast<char*>(buf.c_str())}}}});
     } else {
       if (isalpha(peek())) {
         std::string buf = "";
@@ -161,44 +143,25 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
         } else if (buf == "public") {
           tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line});
         } else {
-          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
+          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.identifier = const_cast<char*>(std::string(buf).c_str())}});
         }
       } else {
-        Tokens::TokenType tok = TokenType::INTEGER;
         std::string buf = "";
         bool hex = false;
-        if (peek() == '0') {
-          buf += consume();
-          if (peek() == 'x') {
+        if (isdigit(peek()))
+          while (isalnum(peek())) {
             buf += consume();
-            hex = true;
-            tok = TokenType::HEXADECIMAL;
           }
-        }
-        while (isdigit(peek())) {
-          buf += consume();
-        }
         
         if (peek() == '.') {
           if (hex) Errors::error("Cannot have float hexadecimal literal");
           buf += consume();
-          while (isdigit(peek())) {
-            buf += consume();
-          }
-          tok = TokenType::DOUBLE;
-          if (try_consume('f')) tok = TokenType::FLOATING;
-          if (try_consume('L') || try_consume('b')) Errors::error("Cannot have long or binary float literal");
-        } else {
-          if (try_consume('L'))
-            tok = TokenType::LONG;
-          else if (try_consume('b'))
-            tok = TokenType::BINARY;
-          else if (try_consume('d'))
-            tok = TokenType::DOUBLE;
-          else if (try_consume('f'))
-            tok = TokenType::FLOATING;
+          if (isdigit(peek()))
+            while (isalnum(peek())) {
+              buf += consume();
+            }
         }
-        tokens.push(new Tokens::Token{tok, line, std::string(buf)});
+        tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = Literal::parseLiteral(std::string(buf))}});
       }
     }
   }

@@ -74,3 +74,27 @@ std::string Literal::Literal::toString() {
       return "NULL";
   }
 }
+
+bool Literal::Literal::operator==(Literal a) {
+  if (this->type != a.type) return false;
+  switch (this->type) {
+    case LiteralType::binary :
+      return this->u.b == a.u.b;
+    case LiteralType::character :
+      return this->u.c == a.u.c;
+    case LiteralType::double_floating :
+      return this->u.d == a.u.d;
+    case LiteralType::floating :
+      return this->u.f == a.u.f;
+    case LiteralType::hexadecimal :
+      return this->u.h == a.u.h;
+    case LiteralType::integer :
+      return this->u.i == a.u.i;
+    case LiteralType::long_int :
+      return this->u.l == a.u.l;
+    case LiteralType::string :
+      return std::string(this->u.s) == std::string(a.u.s);
+    default:
+      return false;
+  }
+}

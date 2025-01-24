@@ -3,6 +3,7 @@
 #include <sstream>
 #include <List.hpp>
 #include <Errors.hpp>
+#include <Literal.hpp>
 
 namespace Tokens {
   enum class TokenType {
@@ -12,14 +13,7 @@ namespace Tokens {
     DEFINE,
     UNDEFINE,
     IDENTIFIER,
-    INTEGER,
-    FLOATING,
-    DOUBLE,
-    LONG,
-    CHARACTER,
-    STRING,
-    BINARY,
-    HEXADECIMAL,
+    LITERAL,
     OPEN_PAREN,
     CLOSE_PAREN,
     COMMA,
@@ -42,7 +36,10 @@ namespace Tokens {
   struct Token {
     TokenType type;
     int line;
-    std::string value;
+    union {
+      Literal::Literal lit;
+      char* identifier;
+    } value;
     std::string toString();
   };
 

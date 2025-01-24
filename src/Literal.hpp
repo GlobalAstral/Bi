@@ -24,6 +24,7 @@ namespace Literal {
       char* s;
     } u;
     std::string toString();
+    bool operator==(Literal a);
   };
 
   const std::string HEX_PREFIX = "0x";
