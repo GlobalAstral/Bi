@@ -105,25 +105,25 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       if (try_consume('/'))
         comment = true;
     } else if (try_consume('#')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::PREPROCESSOR, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::PREPROCESSOR, line});
     } else if (try_consume('(')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_PAREN, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_PAREN, line});
     }  else if (try_consume(',')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::COMMA, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::COMMA, line});
     } else if (try_consume(')')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_PAREN, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_PAREN, line});
     } else if (try_consume('>')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::GREATER, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::GREATER, line});
     } else if (try_consume('<')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::LESS, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::LESS, line});
     } else if (try_consume('[')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_SQUARE, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_SQUARE, line});
     } else if (try_consume(']')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_SQUARE, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_SQUARE, line});
     } else if (try_consume('{')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_BRACKET, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_BRACKET, line});
     } else if (try_consume('}')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line, ""});
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line});
     } else if (try_consume('\'')) {
       char buf[1] = {consume()};
       tokens.push(new Tokens::Token{Tokens::TokenType::CHARACTER, line, std::string(buf)});
@@ -143,23 +143,23 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
         }
 
         if (buf == "membox") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::MEMBOX, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::MEMBOX, line});
         } else if (buf == "define") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::DEFINE, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::DEFINE, line});
         } else if (buf == "undefine") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::UNDEFINE, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::UNDEFINE, line});
         } else if (buf == "defined") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::DEFINED, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::DEFINED, line});
         } else if (buf == "not") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::NOT, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::NOT, line});
         } else if (buf == "if") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::IF, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::IF, line});
         } else if (buf == "label") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::LABEL, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::LABEL, line});
         } else if (buf == "method") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::METHOD, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::METHOD, line});
         } else if (buf == "public") {
-          tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line, ""});
+          tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line});
         } else {
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, std::string(buf)});
         }

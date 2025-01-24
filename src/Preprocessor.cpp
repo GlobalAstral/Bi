@@ -44,7 +44,7 @@ Tokens::Token* Preprocessor::Preprocessor::compute(Lists::List<Definition*>& def
     std::string val = (definitions.contains(nominativeDef(ident->value))) ? "1" : "0";
     return new Tokens::Token{Tokens::TokenType::INTEGER, ident->line, val};
   }
-  return new Tokens::Token{Tokens::TokenType::NULL_TOKEN, -1, ""};
+  return new Tokens::Token{Tokens::TokenType::NULL_TOKEN, -1};
 }
 
 void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition*>& definitions) {
