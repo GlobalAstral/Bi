@@ -6,7 +6,7 @@
 #include <string.h>
 #include <Tokenizer.hpp>
 #include <Preprocessor.hpp>
-#include <Literal.hpp>
+#include <Parser.hpp>
 
 using std::cout;
 using std::endl;
@@ -66,5 +66,11 @@ int main(int argc, char** argv) {
   for (int i = 0; i < preprocessed.size(); i++)
     cout << preprocessed.at(i)->toString() << endl;
 
+  Parser::Parser parser{preprocessed};
+  Lists::List<Nodes::Statement*> stmts = parser.parseStmts();
+  cout << endl << "STATEMENTS:" << endl;
+  for (int i = 0; i < stmts.size(); i++)
+    cout << stmts.at(i)->toString() << endl;
+
 	return 0;
-}
+} 

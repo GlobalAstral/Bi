@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <Tokenizer.hpp>
+#include <Nodes.hpp>
 
 namespace Parser {
   class Parser {
@@ -10,7 +11,9 @@ namespace Parser {
         this->content = tokens;
       }
 
-      
+      Nodes::Expression* parseExpr(bool paren = false);
+      Nodes::Statement* parseStmt();
+      Lists::List<Nodes::Statement*> parseStmts();
     private:
       int _peek = 0;
       Lists::List<Tokens::Token*> content;
