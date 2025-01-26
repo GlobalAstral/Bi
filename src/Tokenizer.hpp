@@ -4,6 +4,7 @@
 #include <List.hpp>
 #include <Errors.hpp>
 #include <Literal.hpp>
+#include <string.h>
 
 namespace Tokens {
   enum class TokenType {

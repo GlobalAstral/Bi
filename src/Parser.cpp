@@ -6,7 +6,10 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
 
   Nodes::Expression* expression;
   if (peek()->type == Tokens::TokenType::LITERAL) {
-    expression = new Nodes::Expression{Nodes::ExpressionType::literal, {.lit = consume()->value.lit}};
+    expression = new Nodes::Expression{Nodes::ExpressionType::literal, {.literal = {consume()->value.lit}}};
+  } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
+    Tokens::Token* t = consume();
+    expression = new Nodes::Expression{Nodes::ExpressionType::identifier, {.ident = {t->value.identifier}}};
   }
 
   if (paren)
@@ -15,8 +18,21 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
   return expression;
 }
 
+Nodes::DataType* Parser::Parser::parseDataType() {
+  if (tryConsume(Tokens::TokenType::MEMBOX)) {
+    return new Nodes::DataType{Nodes::DTypeT::MEMBOX, parseExpr()};
+  } else if (tryConsume(Tokens::TokenType::LABEL)) {
+    Nodes::Expression* e = parseExpr();
+    if (e->type != Nodes::ExpressionType::identifier) Errors::error("Expected identifier after label keyword");
+    return new Nodes::DataType{Nodes::DTypeT::LABEL, e};
+  }
+  //TODO UNION AND STRUCT
+  return {};
+}
+
 Nodes::Statement* Parser::Parser::parseStmt() {
   
+  return {};
 }
 
 Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {

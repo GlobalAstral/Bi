@@ -58,6 +58,15 @@ std::string Tokens::Token::toString() {
     case TokenType::IF:
       ss << "IF";
       break;
+    case TokenType::LABEL :
+      ss << "LABEL";
+      break;
+    case TokenType::PUBLIC :
+      ss << "PUBLIC";
+      break;
+    case TokenType::METHOD :
+      ss << "METHOD";
+      break;
     default:
       ss << "NULL";
       break;
@@ -143,7 +152,9 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
         } else if (buf == "public") {
           tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line});
         } else {
-          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.identifier = const_cast<char*>(std::string(buf).c_str())}});
+          char* buffer = (char*)malloc(buf.size());
+          strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
+          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.identifier = buffer}});
         }
       } else {
         std::string buf = "";

@@ -13,6 +13,7 @@ namespace Parser {
 
       Nodes::Expression* parseExpr(bool paren = false);
       Nodes::Statement* parseStmt();
+      Nodes::DataType* parseDataType();
       Lists::List<Nodes::Statement*> parseStmts();
     private:
       int _peek = 0;
@@ -40,6 +41,7 @@ namespace Parser {
         if (peek()->type == type)
           return consume();
         Errors::error(error);
+        return {}; //! to get rid of warning
       }
   };
 }
