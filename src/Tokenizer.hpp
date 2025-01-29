@@ -12,6 +12,8 @@ namespace Tokens {
     PREPROCESSOR,
     MEMBOX,
     LABEL,
+    STRUCT,
+    UNION,
     DEFINE,
     UNDEFINE,
     IDENTIFIER,
@@ -32,7 +34,7 @@ namespace Tokens {
     NULL_TOKEN,
     IF,
     METHOD,
-    PUBLIC
+    PUBLIC,
   };
 
   struct Token {

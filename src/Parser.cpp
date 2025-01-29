@@ -23,8 +23,34 @@ Nodes::DataType* Parser::Parser::parseDataType() {
     return new Nodes::DataType{Nodes::DTypeT::MEMBOX, parseExpr()};
   } else if (tryConsume(Tokens::TokenType::LABEL)) {
     return new Nodes::DataType{Nodes::DTypeT::LABEL};
+  } else if (tryConsume(Tokens::TokenType::STRUCT)) {
+    Lists::List<Nodes::Variable*> ret{};
+    tryConsumeError(Tokens::TokenType::OPEN_BRACKET, "Expected '{'");
+    bool notFound = false;
+    while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
+      Nodes::DataType* dt = parseDataType();
+      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype");
+      Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
+      tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+      ret.push(new Nodes::Variable{dt, ident->value.identifier});
+    }
+    if (notFound) Errors::error("Expected '}'");
+    return new Nodes::DataType{Nodes::DTypeT::STRUCT, new Nodes::Expression{}, ret};
+    
+  } else if (tryConsume(Tokens::TokenType::UNION)) {
+    Lists::List<Nodes::Variable*> ret{};
+    tryConsumeError(Tokens::TokenType::OPEN_BRACKET, "Expected '{'");
+    bool notFound = false;
+    while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
+      Nodes::DataType* dt = parseDataType();
+      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype");
+      Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
+      tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+      ret.push(new Nodes::Variable{dt, ident->value.identifier});
+    }
+    if (notFound) Errors::error("Expected '}'");
+    return new Nodes::DataType{Nodes::DTypeT::UNION, new Nodes::Expression{}, ret};
   }
-  //TODO UNION AND STRUCT
   return new Nodes::DataType{Nodes::DTypeT::INVALID};
 }
 

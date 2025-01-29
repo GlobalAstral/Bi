@@ -61,7 +61,7 @@ namespace Nodes {
   struct DataType {
     DTypeT type;
     Expression* expr;
-    Lists::List<DataType*> inner;
+    Lists::List<Variable*> inner;
     std::string toString() {
       std::stringstream ss;
       switch (this->type) {
@@ -87,8 +87,8 @@ namespace Nodes {
       if (inner.size() != a.inner.size()) return false;
       bool flag = true;
       for (int i = 0; i < inner.size(); i++) {
-        DataType* j = inner.at(i);
-        DataType* k = a.inner.at(i);
+        Variable* j = inner.at(i);
+        Variable* k = a.inner.at(i);
         if (!(*j == *k)) {
           flag = false;
           break;
@@ -106,6 +106,25 @@ namespace Nodes {
       char* reg;
       int offset;
     } location;
+    std::string toString() {
+      std::string s = "Variable '" + std::string(this->name) + "' of type '" + this->type->toString() + "' at ";
+      if (inStack) {
+        char buf[255];
+        sprintf(buf, "%d", this->location.offset);
+        s = s + "Stack location " + std::string(buf);
+      } else {
+        s = s + "Register location " + std::string(this->location.reg);
+      }
+      return s;
+    }
+    bool operator==(Variable a) {
+      if (a.type != this->type) return false;
+      if (std::string(a.name) != std::string(this->name)) return false;
+      if (a.inStack != this->inStack) return false;
+      if (a.inStack && (a.location.offset != this->location.offset)) return false;
+      if (std::string(a.location.reg) != std::string(this->location.reg)) return false;
+      return true;
+    }
   };
 
   struct Statement;

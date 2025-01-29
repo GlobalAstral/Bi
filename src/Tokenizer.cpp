@@ -70,6 +70,12 @@ std::string Tokens::Token::toString() {
     case TokenType::SEMICOLON :
       ss << "SEMICOLON";
       break;
+    case TokenType::STRUCT :
+      ss << "STRUCT";
+      break;
+    case TokenType::UNION :
+      ss << "UNION";
+      break;
     default:
       ss << "NULL";
       break;
@@ -156,6 +162,10 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::METHOD, line});
         } else if (buf == "public") {
           tokens.push(new Tokens::Token{Tokens::TokenType::PUBLIC, line});
+        } else if (buf == "struct") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::STRUCT, line});
+        } else if (buf == "union") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::UNION, line});
         } else {
           char* buffer = (char*)malloc(buf.size());
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
