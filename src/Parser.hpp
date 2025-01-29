@@ -16,6 +16,19 @@ namespace Parser {
       Nodes::DataType* parseDataType();
       Lists::List<Nodes::Statement*> parseStmts();
     private:
+      Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
+        if (std::string(a->identifier) != std::string(b->identifier)) return false;
+        if (!(*(a->returnType) == *(b->returnType))) return false;
+        if (a->params->size() != b->params->size()) return false;
+        bool flag = true;
+        for (int i = 0; i < a->params->size(); i++) {
+          if (a->params->at(i)->type != b->params->at(i)->type) {
+            flag = false;
+            break;
+          }
+        }
+        return flag;
+      }};
       int _peek = 0;
       Lists::List<Tokens::Token*> content;
       bool hasPeek() {

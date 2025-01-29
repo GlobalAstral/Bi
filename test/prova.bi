@@ -1,3 +1,8 @@
 
-membox 10
-label Gianni
+#define int membox 4#
+
+method public int main(int a, int b);
+
+method public int main(int a, int b) {
+  
+}

@@ -22,16 +22,60 @@ Nodes::DataType* Parser::Parser::parseDataType() {
   if (tryConsume(Tokens::TokenType::MEMBOX)) {
     return new Nodes::DataType{Nodes::DTypeT::MEMBOX, parseExpr()};
   } else if (tryConsume(Tokens::TokenType::LABEL)) {
-    Nodes::Expression* e = parseExpr();
-    if (e->type != Nodes::ExpressionType::identifier) Errors::error("Expected identifier after label keyword");
-    return new Nodes::DataType{Nodes::DTypeT::LABEL, e};
+    return new Nodes::DataType{Nodes::DTypeT::LABEL};
   }
   //TODO UNION AND STRUCT
-  return {};
+  return new Nodes::DataType{Nodes::DTypeT::INVALID};
 }
 
 Nodes::Statement* Parser::Parser::parseStmt() {
-  
+  if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
+    Lists::List<Nodes::Statement*> scp{};
+    bool notFound = false;
+    while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
+      scp.push(parseStmt());
+    if (notFound) Errors::error("Expected '}'");
+    
+  } else if (tryConsume(Tokens::TokenType::METHOD)) {
+    bool pub = tryConsume(Tokens::TokenType::PUBLIC);
+    Nodes::DataType* dt = parseDataType();
+    if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType");
+    Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+    Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
+
+    if (tryConsume(Tokens::TokenType::OPEN_PAREN)) {
+      bool notClosed = false;
+      while ((notClosed = !tryConsume(Tokens::TokenType::CLOSE_PAREN))) {
+        Nodes::DataType* varDT = parseDataType();
+        if (varDT->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType");
+        Tokens::Token* varIdent = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+        tryConsume(Tokens::TokenType::COMMA);
+        Nodes::Variable* var = new Nodes::Variable{varDT, varIdent->value.identifier};
+        params->push(var);
+      }
+      if (notClosed) Errors::error("Expected ')'");
+    }
+    Nodes::Method* mtd = new Nodes::Method{ident->value.identifier, pub, dt, params};
+    bool exists = this->declaredMethods.contains(mtd);
+
+    if (tryConsume(Tokens::TokenType::SEMICOLON)) {
+      if (exists) Errors::error("Method already exists");
+      this->declaredMethods.push(mtd);
+      return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
+    }
+    if (exists) {
+      int index = this->declaredMethods.index(mtd);
+      Nodes::Method* existing = this->declaredMethods.at(index);
+      if (existing->stmt != NULL) Errors::error("Method already exists");
+      this->declaredMethods.pop(index);
+    }
+
+    Nodes::Statement* stmt = parseStmt();
+    if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope");
+    mtd->stmt = stmt;
+    this->declaredMethods.push(mtd);
+    return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
+  }
   return {};
 }
 

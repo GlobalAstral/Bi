@@ -67,6 +67,9 @@ std::string Tokens::Token::toString() {
     case TokenType::METHOD :
       ss << "METHOD";
       break;
+    case TokenType::SEMICOLON :
+      ss << "SEMICOLON";
+      break;
     default:
       ss << "NULL";
       break;
@@ -116,6 +119,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_BRACKET, line});
     } else if (try_consume('}')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line});
+    } else if (try_consume(';')) {
+      tokens.push(new Tokens::Token{Tokens::TokenType::SEMICOLON, line});
     } else if (try_consume('\'')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::character, {.c = consume()}}}});
       if (!try_consume('\'')) Errors::error("Expected closing single quote");

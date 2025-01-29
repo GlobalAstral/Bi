@@ -8,6 +8,7 @@
 
 namespace Tokens {
   enum class TokenType {
+    SEMICOLON,
     PREPROCESSOR,
     MEMBOX,
     LABEL,
