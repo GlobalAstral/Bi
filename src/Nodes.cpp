@@ -6,6 +6,7 @@ std::string Nodes::Statement::toString() {
   switch (this->type) {
     case Nodes::StatementType::method :
       ss << ((this->u.method->pub) ? "PUBLIC" : "");
+      ss << ((this->u.method->isInline) ? "INLINE" : "");
       ss << " METHOD(";
       ss << this->u.method->returnType->toString();
       ss << "|";

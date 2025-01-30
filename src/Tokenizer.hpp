@@ -35,6 +35,7 @@ namespace Tokens {
     IF,
     METHOD,
     PUBLIC,
+    INLINE
   };
 
   struct Token {

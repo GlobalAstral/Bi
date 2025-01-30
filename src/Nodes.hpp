@@ -136,6 +136,7 @@ namespace Nodes {
   struct Method {
     char* identifier;
     bool pub;
+    bool isInline;
     DataType* returnType;
     Lists::List<Variable*>* params;
     Statement* stmt;

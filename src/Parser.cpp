@@ -64,6 +64,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     
   } else if (tryConsume(Tokens::TokenType::METHOD)) {
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
+    bool inline_ = tryConsume(Tokens::TokenType::INLINE);
     Nodes::DataType* dt = parseDataType();
     if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType");
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
@@ -81,7 +82,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       }
       if (notClosed) Errors::error("Expected ')'");
     }
-    Nodes::Method* mtd = new Nodes::Method{ident->value.identifier, pub, dt, params};
+    Nodes::Method* mtd = new Nodes::Method{ident->value.identifier, pub, inline_, dt, params};
     bool exists = this->declaredMethods.contains(mtd);
 
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {

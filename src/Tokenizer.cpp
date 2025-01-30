@@ -166,6 +166,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::STRUCT, line});
         } else if (buf == "union") {
           tokens.push(new Tokens::Token{Tokens::TokenType::UNION, line});
+        } else if (buf == "inline") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::INLINE, line});
         } else {
           char* buffer = (char*)malloc(buf.size());
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
