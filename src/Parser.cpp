@@ -54,12 +54,22 @@ Nodes::DataType* Parser::Parser::parseDataType() {
   return new Nodes::DataType{Nodes::DTypeT::INVALID};
 }
 
-Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars) {
+bool Parser::Parser::tryParseDataType() {
+  int prev_peek = _peek;
+  Nodes::DataType* dt = parseDataType();
+  _peek = prev_peek;
+  if (dt->type == Nodes::DTypeT::INVALID) {
+    return false;
+  }
+  return true;
+}
+
+Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret, Lists::List<Nodes::Variable*>& vars) {
   if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
     Lists::List<Nodes::Statement*> scp{};
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
-      scp.push(parseStmt(vars));
+      scp.push(parseStmt(ret, vars));
     if (notFound) Errors::error("Expected '}'");
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
@@ -106,7 +116,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars)
       this->declaredMethods.pop(index);
     }
 
-    Nodes::Statement* stmt = parseStmt(vars);
+    Nodes::Statement* stmt = parseStmt(ret, vars);
     if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope");
     mtd->stmt = stmt;
     this->declaredMethods.push(mtd);
@@ -138,6 +148,22 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars)
       }
     }
     return new Nodes::Statement{Nodes::StatementType::asm_code, {.asmCode = new Nodes::AssemblyCode{code}}};
+  } else if (tryParseDataType()) {
+    Nodes::DataType* dt = parseDataType();
+    Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+
+    Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
+    if (vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists");
+    Nodes::Statement* decl = new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}};
+    vars.push(var);
+    if (tryConsume(Tokens::TokenType::SEMICOLON)) {
+      return decl;
+    }
+    tryConsumeError(Tokens::TokenType::EQUALS, "Expected ';' or '='");
+    Nodes::Expression* ex = parseExpr();
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    ret.push(decl);
+    return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
   }
   Errors::error("Invalid Statement");
   return {};
@@ -150,7 +176,7 @@ Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {
   }};
 
   while (hasPeek()) {
-    Nodes::Statement* stmt = parseStmt(variables);
+    Nodes::Statement* stmt = parseStmt(ret, variables);
     ret.push(stmt);
   }
   return ret;

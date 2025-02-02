@@ -12,9 +12,10 @@ namespace Parser {
       }
 
       Nodes::Expression* parseExpr(bool paren = false);
-      Nodes::Statement* parseStmt(Lists::List<Nodes::Variable*>& vars);
+      Nodes::Statement* parseStmt(Lists::List<Nodes::Statement*>& ret, Lists::List<Nodes::Variable*>& vars);
       Nodes::DataType* parseDataType();
       Lists::List<Nodes::Statement*> parseStmts();
+      bool tryParseDataType();
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
         if (std::string(a->identifier) != std::string(b->identifier)) return false;

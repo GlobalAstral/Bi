@@ -55,6 +55,12 @@ std::string Nodes::Statement::toString() {
     case Nodes::StatementType::asm_code :
       ss << "Assembly code '" << this->u.asmCode->toString() << "'";
       break;
+    case Nodes::StatementType::var_decl :
+      ss << "Declaration of variable '" << this->u.var_decl->var->toString() << "'";
+      break;
+    case Nodes::StatementType::var_set :
+      ss << "Setting of variable '" << this->u.var_set->var->toString() << "' to value '" << this->u.var_set->value->toString() << "'";
+      break;
     default:
       ss << "NULL";
       break;

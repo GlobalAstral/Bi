@@ -8,7 +8,7 @@
 
 namespace Nodes {
   enum class StatementType {
-    method, scope, asm_code
+    method, scope, asm_code, var_decl, var_set
   };
   enum class ExpressionType {
     literal, identifier
@@ -91,9 +91,6 @@ namespace Nodes {
     bool operator==(Variable a) {
       if (a.type != this->type) return false;
       if (std::string(a.name) != std::string(this->name)) return false;
-      if (a.inStack != this->inStack) return false;
-      if (a.inStack && (a.location.offset != this->location.offset)) return false;
-      if (std::string(a.location.reg) != std::string(this->location.reg)) return false;
       return true;
     }
   };
@@ -145,12 +142,22 @@ namespace Nodes {
     }
   };
 
+  struct VariableDeclaration {
+    Variable* var;
+  };
+  struct VariableSetting {
+    Variable* var;
+    Expression* value;
+  };
+
   struct Statement {
     StatementType type;
     union {
       Method* method;
       Scope* scope;
       AssemblyCode* asmCode;
+      VariableDeclaration* var_decl;
+      VariableSetting* var_set;
     } u;
     std::string toString();
   };
