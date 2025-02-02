@@ -7,6 +7,7 @@
 #include <Tokenizer.hpp>
 #include <Preprocessor.hpp>
 #include <Parser.hpp>
+#include <AssemblyTokenizer.hpp>
 
 using std::cout;
 using std::endl;

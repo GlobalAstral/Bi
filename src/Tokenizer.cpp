@@ -76,6 +76,9 @@ std::string Tokens::Token::toString() {
     case TokenType::UNION :
       ss << "UNION";
       break;
+    case TokenType::ASM :
+      ss << "ASSEMBLY";
+      break;
     default:
       ss << "NULL";
       break;
@@ -85,7 +88,8 @@ std::string Tokens::Token::toString() {
     ss << this->value.lit.toString();
   else if (this->type == TokenType::IDENTIFIER)
     ss << this->value.buffer;
-
+  else if (this->type == TokenType::ASM)
+    ss << this->value.assemblyCode->size();
   ss << "'";
   ss << " at line ";
   ss << line;
@@ -174,16 +178,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           if (!try_consume('{')) Errors::error("Expected '{'");
           std::string buff = "";
           bool notFound = false;
+          while (peek() == ' ' || peek() == '\n') 
+            consume();
           while ((notFound = !try_consume('}')))
             buff += consume();
           if (notFound) Errors::error("Expected '}'");
-
-          buff = buff.erase(buff.find_last_not_of(" \t\r\f\v") + 1);
-          buff = buff.erase(0, buff.find_first_not_of(" \t\r\f\v"));
-
-          char* buffer = (char*)malloc(buff.size());
-          strcpy(buffer, const_cast<char*>(std::string(buff).c_str()));
-          tokens.push(new Tokens::Token{Tokens::TokenType::ASM, line, {.buffer = buffer}});
+          Assembly::AssemblyTokenizer asmTokenizer{buff};
+          Lists::List<Assembly::Token*>* code = asmTokenizer.parseAsm();
+          tokens.push(new Tokens::Token{Tokens::TokenType::ASM, line, {.assemblyCode = code}});
         } else {
           char* buffer = (char*)malloc(buf.size());
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));

@@ -5,6 +5,7 @@
 #include <Errors.hpp>
 #include <Literal.hpp>
 #include <string.h>
+#include <AssemblyTokenizer.hpp>
 
 namespace Tokens {
   enum class TokenType {
@@ -45,6 +46,7 @@ namespace Tokens {
     union {
       Literal::Literal lit;
       char* buffer;
+      Lists::List<Assembly::Token*>* assemblyCode;
     } value;
     std::string toString();
   };
