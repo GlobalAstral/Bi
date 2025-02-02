@@ -53,7 +53,7 @@ std::string Nodes::Statement::toString() {
       ss << ")";
       break;
     case Nodes::StatementType::asm_code :
-      ss << "Assembly code '" << std::string(this->u.asmCode->code) << "'";
+      ss << "Assembly code '" << this->u.asmCode->toString() << "'";
       break;
     default:
       ss << "NULL";

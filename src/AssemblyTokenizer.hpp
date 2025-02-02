@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <List.hpp>
+#include <string.h>
 
 namespace Assembly {
   struct Token {

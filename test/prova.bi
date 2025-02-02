@@ -1,10 +1,8 @@
 
 #define int membox 4#
 
-method public int main(int a, int b);
+method int allah(int a, int b) return a + b;
 
-method public int main(int a, int b) {
-  asm {
-    mov rax, 5
-  }
+method public int main {
+  return allah(69, 420);
 }

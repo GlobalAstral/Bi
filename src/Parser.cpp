@@ -54,15 +54,16 @@ Nodes::DataType* Parser::Parser::parseDataType() {
   return new Nodes::DataType{Nodes::DTypeT::INVALID};
 }
 
-Nodes::Statement* Parser::Parser::parseStmt() {
+Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars) {
   if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
     Lists::List<Nodes::Statement*> scp{};
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
-      scp.push(parseStmt());
+      scp.push(parseStmt(vars));
     if (notFound) Errors::error("Expected '}'");
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
+
   } else if (tryConsume(Tokens::TokenType::METHOD)) {
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
     bool inline_ = tryConsume(Tokens::TokenType::INLINE);
@@ -98,25 +99,52 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       this->declaredMethods.pop(index);
     }
 
-    Nodes::Statement* stmt = parseStmt();
+    Nodes::Statement* stmt = parseStmt(vars);
     if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope");
     mtd->stmt = stmt;
     this->declaredMethods.push(mtd);
     return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
+    
   } else if (peek()->type == Tokens::TokenType::ASM) {
     Tokens::Token* asmCode = consume();
-    std::string code = std::string(asmCode->value.buffer);
-    //TODO REPLACE @Anything with variable once you have variables
-    return new Nodes::Statement{Nodes::StatementType::asm_code, {.asmCode = new Nodes::AssemblyCode{const_cast<char*>(code.c_str())}}};
+    Lists::List<Assembly::Token*>* code = new Lists::List<Assembly::Token*>{};
+    *code = asmCode->value.assemblyCode->copy();
+
+    for (int i = 0; i < code->size(); i++) {
+      Assembly::Token* token = code->at(i);
+      for (int j = 0; j < token->params.size(); j++) {
+        char* param = token->params.at(j);
+        if (param[0] != '@') continue;
+        param = const_cast<char*>(std::string(param).erase(0, 1).c_str());
+        if (!vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist");
+        Nodes::Variable* var = vars.at(vars.index(new Nodes::Variable{.name = param}));
+        token->params.pop(j);
+        if (!var->inStack) {
+          token->params.insert(var->location.reg, j);
+        } else {
+          char offset[255];
+          sprintf(offset, "%d", var->location.offset);
+          std::string buf = std::string(offset) + "[rbp]";
+          char* repl = (char*)malloc(buf.size()*sizeof(char));
+          strcpy(repl, buf.c_str());
+          token->params.insert(repl, j);
+        }
+      }
+    }
+    return new Nodes::Statement{Nodes::StatementType::asm_code, {.asmCode = new Nodes::AssemblyCode{code}}};
   }
+  Errors::error("Invalid Statement");
   return {};
 }
 
 Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {
   Lists::List<Nodes::Statement*> ret{};
-  Lists::List<Nodes::Variable*> variables{};
+  Lists::List<Nodes::Variable*> variables{[](Nodes::Variable* a, Nodes::Variable* b) {
+    return std::string(a->name) == std::string(b->name);
+  }};
+
   while (hasPeek()) {
-    Nodes::Statement* stmt = parseStmt();
+    Nodes::Statement* stmt = parseStmt(variables);
     ret.push(stmt);
   }
   return ret;
