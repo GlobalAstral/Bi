@@ -16,16 +16,20 @@ Lists::List<Assembly::Token*>* Assembly::AssemblyTokenizer::parseAsm() {
       this->ignoreSpaces();
       while (peek() != '\n' && peek() != 0) {
         std::string buf = "";
-        while (isalnum(peek())) {
+        while (isalnum(peek()) || peek() == '@') {
           buf += consume();
         }
         this->ignoreSpaces();
         if (peek() == ',') consume();
         this->ignoreSpaces();
-        params.push(const_cast<char*>(buf.c_str()));
+        char* param = (char*)malloc(buf.size()*sizeof(char));
+        strcpy(param, buf.c_str());
+        params.push(param);
       }
       consume();
-      ret->push(new Assembly::Token{instruction, params});
+      char* ins = (char*)malloc(buffer.size()*sizeof(char));
+      strcpy(ins, instruction);
+      ret->push(new Assembly::Token{ins, params});
     }
   }
 

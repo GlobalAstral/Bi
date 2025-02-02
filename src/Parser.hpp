@@ -12,7 +12,7 @@ namespace Parser {
       }
 
       Nodes::Expression* parseExpr(bool paren = false);
-      Nodes::Statement* parseStmt();
+      Nodes::Statement* parseStmt(Lists::List<Nodes::Variable*>& vars);
       Nodes::DataType* parseDataType();
       Lists::List<Nodes::Statement*> parseStmts();
     private:

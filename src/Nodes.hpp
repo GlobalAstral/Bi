@@ -3,6 +3,8 @@
 #include <Literal.hpp>
 #include <List.hpp>
 #include <sstream>
+#include <AssemblyTokenizer.hpp>
+#include <sstream>
 
 namespace Nodes {
   enum class StatementType {
@@ -74,6 +76,7 @@ namespace Nodes {
       char* reg;
       int offset;
     } location;
+
     std::string toString() {
       std::string s = "Variable '" + std::string(this->name) + "' of type '" + this->type->toString() + "' at ";
       if (inStack) {
@@ -122,8 +125,24 @@ namespace Nodes {
     }
   };
 
-  struct AssemblyCode{
-    char* code;
+  struct AssemblyCode {
+    Lists::List<Assembly::Token*>* code;
+    std::string toString() {
+      std::stringstream ss;
+      for (int i = 0; i < code->size(); i++) {
+        Assembly::Token* tok = code->at(i);
+        ss << tok->instruction << " ";
+        for (int j = 0; j < tok->params.size(); j++) {
+          char* param = tok->params.at(j);
+          ss << param;
+          if (j < tok->params.size()-1)
+            ss << ", ";
+        }
+        if (i < code->size()-1)
+          ss << std::endl;
+      }
+      return ss.str();
+    }
   };
 
   struct Statement {
