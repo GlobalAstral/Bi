@@ -6,7 +6,7 @@
 
 namespace Nodes {
   enum class StatementType {
-    method, scope
+    method, scope, asm_code
   };
   enum class ExpressionType {
     literal, identifier
@@ -57,45 +57,13 @@ namespace Nodes {
       }
     }
   };
-
+  struct Variable;
   struct DataType {
     DTypeT type;
     Expression* expr;
-    Lists::List<Variable*> inner;
-    std::string toString() {
-      std::stringstream ss;
-      switch (this->type) {
-        case DTypeT::MEMBOX :
-          return "MEMBOX(" + this->expr->toString() + ")";
-        case DTypeT::LABEL :
-          return "LABEL";
-        case DTypeT::STRUCT :
-          for (int i = 0; i < this->inner.size(); i++)
-            ss << this->inner.at(i)->toString() << ", ";
-          return "STRUCT(" + ss.str() + ")";
-        case DTypeT::UNION :
-          for (int i = 0; i < this->inner.size(); i++)
-            ss << this->inner.at(i)->toString() << ", ";
-          return "UNION(" + ss.str() + ")";
-        default:
-          return "NULL";
-      }
-    }
-    bool operator==(DataType a) {
-      if (this->type != a.type) return false;
-      if (!(*expr == *(a.expr))) return false;
-      if (inner.size() != a.inner.size()) return false;
-      bool flag = true;
-      for (int i = 0; i < inner.size(); i++) {
-        Variable* j = inner.at(i);
-        Variable* k = a.inner.at(i);
-        if (!(*j == *k)) {
-          flag = false;
-          break;
-        }
-      }
-      return flag;
-    }
+    Lists::List<Nodes::Variable*> inner;
+    std::string toString();
+    bool operator==(DataType a);
   };
 
   struct Variable {
@@ -154,11 +122,16 @@ namespace Nodes {
     }
   };
 
+  struct AssemblyCode{
+    char* code;
+  };
+
   struct Statement {
     StatementType type;
     union {
       Method* method;
       Scope* scope;
+      AssemblyCode* asmCode;
     } u;
     std::string toString();
   };

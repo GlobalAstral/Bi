@@ -7,7 +7,7 @@ Preprocessor::Definition* nominativeDef(std::string name) {
 Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::Token* ident) {
   Definition* def = new Definition{};
   
-  def->name = std::string(ident->value.identifier);
+  def->name = std::string(ident->value.buffer);
   if (try_consume(Tokens::TokenType::OPEN_ANGLE))
     while (peek()->type == Tokens::TokenType::IDENTIFIER) {
       def->params.push(consume());
@@ -41,7 +41,7 @@ Tokens::Token* Preprocessor::Preprocessor::compute(Lists::List<Definition*>& def
   } else if (try_consume(Tokens::TokenType::DEFINED)) {
     if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier");
     Tokens::Token* ident = consume();
-    int val = (definitions.contains(nominativeDef(std::string(ident->value.identifier)))) ? 1 : 0;
+    int val = (definitions.contains(nominativeDef(std::string(ident->value.buffer)))) ? 1 : 0;
     return new Tokens::Token{Tokens::TokenType::LITERAL, ident->line, {.lit = {Literal::LiteralType::integer, {.i = val}}}};
   }
   return new Tokens::Token{Tokens::TokenType::NULL_TOKEN, -1};
@@ -52,15 +52,15 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
     if (try_consume(Tokens::TokenType::DEFINE)) {
       if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
       Tokens::Token* ident = consume();
-      if (definitions.contains(nominativeDef(std::string(ident->value.identifier))))
+      if (definitions.contains(nominativeDef(std::string(ident->value.buffer))))
         Errors::error("Definition already exists");
       definitions.push(preprocessDefine(ident));
     } else if (try_consume(Tokens::TokenType::UNDEFINE)) {
       if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
       Tokens::Token* ident = consume();
-      if (!definitions.contains(nominativeDef(std::string(ident->value.identifier))))
+      if (!definitions.contains(nominativeDef(std::string(ident->value.buffer))))
         Errors::error("Definition does not exists");
-      definitions.pop(definitions.index(nominativeDef(std::string(ident->value.identifier))));
+      definitions.pop(definitions.index(nominativeDef(std::string(ident->value.buffer))));
     } else if (try_consume(Tokens::TokenType::IF)) {
       if (!isComputable(definitions)) Errors::error("Expected Preprocessor Expression");
       int val = compute(definitions)->value.lit.u.i;
@@ -77,16 +77,16 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
     }
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
-    if (!definitions.contains(nominativeDef(std::string(ident->value.identifier)))) {
+    if (!definitions.contains(nominativeDef(std::string(ident->value.buffer)))) {
       ret.push(ident);
       return;
     }
 
-    Definition* def = definitions.at(definitions.index(nominativeDef(std::string(ident->value.identifier))));
+    Definition* def = definitions.at(definitions.index(nominativeDef(std::string(ident->value.buffer))));
     Lists::List<Tokens::Token*> temp = def->content.copy();
     Dict::Dict<Tokens::Token*, Lists::List<Tokens::Token*>*> map{[](Tokens::Token* a, Tokens::Token* b){
         if (a->type != b->type) return false;
-        if (a->type == Tokens::TokenType::IDENTIFIER) return a->value.identifier == b->value.identifier;
+        if (a->type == Tokens::TokenType::IDENTIFIER) return a->value.buffer == b->value.buffer;
         if (a->type == Tokens::TokenType::LITERAL) {return a->value.lit == b->value.lit;}
         return true;
       }};

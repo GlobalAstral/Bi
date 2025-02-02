@@ -84,7 +84,7 @@ std::string Tokens::Token::toString() {
   if (this->type == TokenType::LITERAL)
     ss << this->value.lit.toString();
   else if (this->type == TokenType::IDENTIFIER)
-    ss << this->value.identifier;
+    ss << this->value.buffer;
 
   ss << "'";
   ss << " at line ";
@@ -168,10 +168,26 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::UNION, line});
         } else if (buf == "inline") {
           tokens.push(new Tokens::Token{Tokens::TokenType::INLINE, line});
+        } else if (buf == "asm") {
+          while (peek() == ' ' || peek() == '\n') 
+            consume();
+          if (!try_consume('{')) Errors::error("Expected '{'");
+          std::string buff = "";
+          bool notFound = false;
+          while ((notFound = !try_consume('}')))
+            buff += consume();
+          if (notFound) Errors::error("Expected '}'");
+
+          buff = buff.erase(buff.find_last_not_of(" \t\r\f\v") + 1);
+          buff = buff.erase(0, buff.find_first_not_of(" \t\r\f\v"));
+
+          char* buffer = (char*)malloc(buff.size());
+          strcpy(buffer, const_cast<char*>(std::string(buff).c_str()));
+          tokens.push(new Tokens::Token{Tokens::TokenType::ASM, line, {.buffer = buffer}});
         } else {
           char* buffer = (char*)malloc(buf.size());
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
-          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.identifier = buffer}});
+          tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.buffer = buffer}});
         }
       } else {
         std::string buf = "";

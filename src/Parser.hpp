@@ -22,7 +22,7 @@ namespace Parser {
         if (a->params->size() != b->params->size()) return false;
         bool flag = true;
         for (int i = 0; i < a->params->size(); i++) {
-          if (a->params->at(i)->type != b->params->at(i)->type) {
+          if (!(a->params->at(i)->type == b->params->at(i)->type)) {
             flag = false;
             break;
           }

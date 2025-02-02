@@ -35,7 +35,8 @@ namespace Tokens {
     IF,
     METHOD,
     PUBLIC,
-    INLINE
+    INLINE,
+    ASM
   };
 
   struct Token {
@@ -43,7 +44,7 @@ namespace Tokens {
     int line;
     union {
       Literal::Literal lit;
-      char* identifier;
+      char* buffer;
     } value;
     std::string toString();
   };
