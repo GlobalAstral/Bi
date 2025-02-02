@@ -109,7 +109,6 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars)
     Tokens::Token* asmCode = consume();
     Lists::List<Assembly::Token*>* code = new Lists::List<Assembly::Token*>{};
     *code = asmCode->value.assemblyCode->copy();
-
     for (int i = 0; i < code->size(); i++) {
       Assembly::Token* token = code->at(i);
       for (int j = 0; j < token->params.size(); j++) {
