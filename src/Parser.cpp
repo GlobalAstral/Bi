@@ -83,7 +83,13 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars)
         params->push(var);
       }
       if (notClosed) Errors::error("Expected ')'");
+      int stackTop = (params->size()-1)*8 + 16;
+      for (int i = params->size()-1; i >= 0; i--) {
+        int offset = stackTop - ((params->size()-1) - i)*8;
+        params->at(i)->location.offset = offset;
+      }
     }
+
     Nodes::Method* mtd = new Nodes::Method{ident->value.buffer, pub, inline_, dt, params};
     bool exists = this->declaredMethods.contains(mtd);
 
@@ -92,6 +98,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Variable*>& vars)
       this->declaredMethods.push(mtd);
       return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
     }
+    
     if (exists) {
       int index = this->declaredMethods.index(mtd);
       Nodes::Method* existing = this->declaredMethods.at(index);
