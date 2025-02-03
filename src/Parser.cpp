@@ -93,11 +93,11 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
         params->push(var);
       }
       if (notClosed) Errors::error("Expected ')'");
-      int stackTop = (params->size()-1)*8 + 16;
-      for (int i = params->size()-1; i >= 0; i--) {
-        int offset = stackTop - ((params->size()-1) - i)*8;
-        params->at(i)->location.offset = offset;
-      }
+      // int stackTop = (params->size()-1)*8 + 16;
+      // for (int i = params->size()-1; i >= 0; i--) {
+      //   int offset = stackTop - ((params->size()-1) - i)*8;
+      //   params->at(i)->location.offset = offset;
+      // }
     }
 
     Nodes::Method* mtd = new Nodes::Method{ident->value.buffer, pub, inline_, dt, params};
