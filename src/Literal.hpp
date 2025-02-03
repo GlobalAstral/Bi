@@ -29,7 +29,7 @@ namespace Literal {
 
   const std::string HEX_PREFIX = "0x";
 
-  Literal parseLiteral(std::string s);
+  Literal parseLiteral(std::string s, int line);
   bool isSuffix(char c);
   bool hasDot(std::string s);
 }

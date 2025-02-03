@@ -135,13 +135,13 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::EQUALS, line});
     } else if (try_consume('\'')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::character, {.c = consume()}}}});
-      if (!try_consume('\'')) Errors::error("Expected closing single quote");
+      if (!try_consume('\'')) Errors::error("Expected closing single quote", line);
     } else if (try_consume('"')) {
       std::string buf = "";
       bool notFound = false;
       while ((notFound = !try_consume('"')))
         buf += consume();
-      if (notFound) Errors::error("Expected closing quote");
+      if (notFound) Errors::error("Expected closing quote", line);
       tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::string, {.s = const_cast<char*>(buf.c_str())}}}});
     } else {
       if (isalpha(peek())) {
@@ -177,14 +177,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();
-          if (!try_consume('{')) Errors::error("Expected '{'");
+          if (!try_consume('{')) Errors::error("Expected '{'", line);
           std::string buff = "";
           bool notFound = false;
           while (peek() == ' ' || peek() == '\n') 
             consume();
           while ((notFound = !try_consume('}')))
             buff += consume();
-          if (notFound) Errors::error("Expected '}'");
+          if (notFound) Errors::error("Expected '}'", line);
           Assembly::AssemblyTokenizer asmTokenizer{buff};
           Lists::List<Assembly::Token*>* code = asmTokenizer.parseAsm();
           tokens.push(new Tokens::Token{Tokens::TokenType::ASM, line, {.assemblyCode = code}});
@@ -202,14 +202,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           }
         
         if (peek() == '.') {
-          if (hex) Errors::error("Cannot have float hexadecimal literal");
+          if (hex) Errors::error("Cannot have float hexadecimal literal", line);
           buf += consume();
           if (isdigit(peek()))
             while (isalnum(peek())) {
               buf += consume();
             }
         }
-        tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = Literal::parseLiteral(std::string(buf))}});
+        tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = Literal::parseLiteral(std::string(buf), line)}});
       }
     }
   }

@@ -29,12 +29,12 @@ Nodes::DataType* Parser::Parser::parseDataType() {
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
       Nodes::DataType* dt = parseDataType();
-      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype");
+      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype", peek(-1)->line);
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
       ret.push(new Nodes::Variable{dt, ident->value.buffer});
     }
-    if (notFound) Errors::error("Expected '}'");
+    if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     return new Nodes::DataType{Nodes::DTypeT::STRUCT, new Nodes::Expression{}, ret};
     
   } else if (tryConsume(Tokens::TokenType::UNION)) {
@@ -43,12 +43,12 @@ Nodes::DataType* Parser::Parser::parseDataType() {
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
       Nodes::DataType* dt = parseDataType();
-      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype");
+      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype", peek(-1)->line);
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
       ret.push(new Nodes::Variable{dt, ident->value.buffer});
     }
-    if (notFound) Errors::error("Expected '}'");
+    if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     return new Nodes::DataType{Nodes::DTypeT::UNION, new Nodes::Expression{}, ret};
   }
   return new Nodes::DataType{Nodes::DTypeT::INVALID};
@@ -70,7 +70,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
       scp.push(parseStmt(ret, vars));
-    if (notFound) Errors::error("Expected '}'");
+    if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
 
@@ -78,7 +78,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
     bool inline_ = tryConsume(Tokens::TokenType::INLINE);
     Nodes::DataType* dt = parseDataType();
-    if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType");
+    if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType", peek(-1)->line);
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
     Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
 
@@ -86,13 +86,13 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
       bool notClosed = false;
       while ((notClosed = !tryConsume(Tokens::TokenType::CLOSE_PAREN))) {
         Nodes::DataType* varDT = parseDataType();
-        if (varDT->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType");
+        if (varDT->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType", peek(-1)->line);
         Tokens::Token* varIdent = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
         tryConsume(Tokens::TokenType::COMMA);
         Nodes::Variable* var = new Nodes::Variable{varDT, varIdent->value.buffer};
         params->push(var);
       }
-      if (notClosed) Errors::error("Expected ')'");
+      if (notClosed) Errors::error("Expected ')'", peek(-1)->line);
       // int stackTop = (params->size()-1)*8 + 16;
       // for (int i = params->size()-1; i >= 0; i--) {
       //   int offset = stackTop - ((params->size()-1) - i)*8;
@@ -104,7 +104,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     bool exists = this->declaredMethods.contains(mtd);
 
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
-      if (exists) Errors::error("Method already exists");
+      if (exists) Errors::error("Method already exists", peek(-1)->line);
       this->declaredMethods.push(mtd);
       return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
     }
@@ -112,12 +112,12 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     if (exists) {
       int index = this->declaredMethods.index(mtd);
       Nodes::Method* existing = this->declaredMethods.at(index);
-      if (existing->stmt != NULL) Errors::error("Method already exists");
+      if (existing->stmt != NULL) Errors::error("Method already exists", peek(-1)->line);
       this->declaredMethods.pop(index);
     }
 
     Nodes::Statement* stmt = parseStmt(ret, vars);
-    if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope");
+    if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope", peek(-1)->line);
     mtd->stmt = stmt;
     this->declaredMethods.push(mtd);
     return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
@@ -132,7 +132,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
         char* param = token->params.at(j);
         if (param[0] != '@') continue;
         param = const_cast<char*>(std::string(param).erase(0, 1).c_str());
-        if (!vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist");
+        if (!vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist", peek(-1)->line);
         Nodes::Variable* var = vars.at(vars.index(new Nodes::Variable{.name = param}));
         token->params.pop(j);
         if (!var->inStack) {
@@ -153,7 +153,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
 
     Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
-    if (vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists");
+    if (vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
     Nodes::Statement* decl = new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}};
     vars.push(var);
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
@@ -164,8 +164,22 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     ret.push(decl);
     return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
+  } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
+    Tokens::Token* ident = consume();
+    tryConsumeError(Tokens::TokenType::EQUALS, "Expected '='");
+    int index = -1;
+    for (int i = 0; i < vars.size(); i++) {
+      if (std::string(vars.at(i)->name) != std::string(ident->value.buffer)) continue;
+      index = i;
+      break;
+    }
+    if (index == -1) Errors::error("Variable '" + std::string(ident->value.buffer) + "' does not exist", peek(-1)->line);
+    Nodes::Expression* expr = parseExpr();
+    Nodes::Variable* var = vars.at(index);
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, expr}}};
   }
-  Errors::error("Invalid Statement");
+  Errors::error("Invalid Statement", peek(-1)->line);
   return {};
 }
 

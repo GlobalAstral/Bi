@@ -35,9 +35,11 @@ namespace Parser {
       bool hasPeek() {
         return (this->_peek >= 0 && this->_peek < this->content.size());
       }
-      Tokens::Token* peek() {
+      Tokens::Token* peek(int offset = 0) {
+        this->_peek += offset;
         if (!hasPeek()) return new Tokens::Token{Tokens::TokenType::NULL_TOKEN, -1};
-        return this->content.at(this->_peek);
+        this->_peek -= offset;
+        return this->content.at(this->_peek + offset);
       }
       Tokens::Token* consume() {
         Tokens::Token* r = peek();
@@ -54,7 +56,7 @@ namespace Parser {
       Tokens::Token* tryConsumeError(Tokens::TokenType type, std::string error) {
         if (peek()->type == type)
           return consume();
-        Errors::error(error);
+        Errors::error(error, peek()->line);
         return {}; //! to get rid of warning
       }
   };

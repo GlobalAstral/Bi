@@ -11,12 +11,12 @@ bool Literal::hasDot(std::string s) {
   return false;
 }
 
-Literal::Literal Literal::parseLiteral(std::string s) {
+Literal::Literal Literal::parseLiteral(std::string s, int line) {
   char last = s.at(s.size()-1);
   std::string f2 = s.substr(0, 2);
   bool floating = hasDot(s);
   if (f2 == HEX_PREFIX) {
-    if (floating) Errors::error("Cannot have floating hex value");
+    if (floating) Errors::error("Cannot have floating hex value", line);
     return {LiteralType::hexadecimal, {.h = std::stoull(s, 0, 16)}};
   }
   if (floating) {
