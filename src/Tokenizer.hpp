@@ -38,7 +38,8 @@ namespace Tokens {
     PUBLIC,
     INLINE,
     ASM,
-    EQUALS
+    EQUALS,
+    TYPE
   };
 
   struct Token {

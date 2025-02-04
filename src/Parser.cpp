@@ -28,8 +28,7 @@ Nodes::DataType* Parser::Parser::parseDataType() {
     tryConsumeError(Tokens::TokenType::OPEN_BRACKET, "Expected '{'");
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
-      Nodes::DataType* dt = parseDataType();
-      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype", peek(-1)->line);
+      Nodes::Type* dt = parseType();
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
       ret.push(new Nodes::Variable{dt, ident->value.buffer});
@@ -42,14 +41,19 @@ Nodes::DataType* Parser::Parser::parseDataType() {
     tryConsumeError(Tokens::TokenType::OPEN_BRACKET, "Expected '{'");
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET))) {
-      Nodes::DataType* dt = parseDataType();
-      if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected datatype", peek(-1)->line);
+      Nodes::Type* dt = parseType();
+
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
       ret.push(new Nodes::Variable{dt, ident->value.buffer});
     }
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     return new Nodes::DataType{Nodes::DTypeT::UNION, new Nodes::Expression{}, ret};
+  } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
+    Tokens::Token* ident = peek();
+    if (!this->declaredTypes.contains(new Nodes::Type{ident->value.buffer})) 
+      return new Nodes::DataType{Nodes::DTypeT::INVALID};
+    return this->declaredTypes.at(this->declaredTypes.index(new Nodes::Type{ident->value.buffer}))->dt;
   }
   return new Nodes::DataType{Nodes::DTypeT::INVALID};
 }
@@ -62,6 +66,19 @@ bool Parser::Parser::tryParseDataType() {
     return false;
   }
   return true;
+}
+
+Nodes::Type* Parser::Parser::parseType() {
+  if (peek()->type != Tokens::TokenType::IDENTIFIER) 
+    Errors::error("Expected declared Type", peek(-1)->line);
+  Tokens::Token* ident = consume();
+  if (!this->declaredTypes.contains(new Nodes::Type{ident->value.buffer})) 
+    Errors::error("Type not declared", peek(-1)->line);
+  return this->declaredTypes.at(this->declaredTypes.index(new Nodes::Type{ident->value.buffer}));
+}
+
+bool Parser::Parser::isType() {
+  return (peek()->type == Tokens::TokenType::IDENTIFIER && this->declaredTypes.contains(new Nodes::Type{peek()->value.buffer}));
 }
 
 Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret) {
@@ -77,27 +94,20 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
   } else if (tryConsume(Tokens::TokenType::METHOD)) {
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
     bool inline_ = tryConsume(Tokens::TokenType::INLINE);
-    Nodes::DataType* dt = parseDataType();
-    if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType", peek(-1)->line);
+    Nodes::Type* dt = parseType();
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
     Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
 
     if (tryConsume(Tokens::TokenType::OPEN_PAREN)) {
       bool notClosed = false;
       while ((notClosed = !tryConsume(Tokens::TokenType::CLOSE_PAREN))) {
-        Nodes::DataType* varDT = parseDataType();
-        if (varDT->type == Nodes::DTypeT::INVALID) Errors::error("Expected DataType", peek(-1)->line);
+        Nodes::Type* varDT = parseType();
         Tokens::Token* varIdent = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
         tryConsume(Tokens::TokenType::COMMA);
         Nodes::Variable* var = new Nodes::Variable{varDT, varIdent->value.buffer};
         params->push(var);
       }
       if (notClosed) Errors::error("Expected ')'", peek(-1)->line);
-      // int stackTop = (params->size()-1)*8 + 16;
-      // for (int i = params->size()-1; i >= 0; i--) {
-      //   int offset = stackTop - ((params->size()-1) - i)*8;
-      //   params->at(i)->location.offset = offset;
-      // }
     }
 
     Nodes::Method* mtd = new Nodes::Method{ident->value.buffer, pub, inline_, dt, params};
@@ -148,8 +158,8 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
       }
     }
     return new Nodes::Statement{Nodes::StatementType::asm_code, {.asmCode = new Nodes::AssemblyCode{code}}};
-  } else if (tryParseDataType()) {
-    Nodes::DataType* dt = parseDataType();
+  } else if (isType()) {
+    Nodes::Type* dt = parseType();
     Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
 
     Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
@@ -178,6 +188,15 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
     Nodes::Variable* var = this->vars.at(index);
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, expr}}};
+  } else if (tryConsume(Tokens::TokenType::TYPE)) {
+    Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
+    Nodes::DataType* dt = parseDataType();
+    if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected valid DataType", peek(-1)->line);
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    Nodes::Type* t = new Nodes::Type{ident->value.buffer, dt};
+    this->declaredTypes.push(t);
+    this->skipStmt = true;
+    return new Nodes::Statement{};
   }
   Errors::error("Invalid Statement", peek(-1)->line);
   return {};
@@ -188,7 +207,11 @@ Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {
 
   while (hasPeek()) {
     Nodes::Statement* stmt = parseStmt(ret);
-    ret.push(stmt);
+    if (this->skipStmt) {
+      this->skipStmt = false;
+    } else {
+      ret.push(stmt);
+    }
   }
   return ret;
 }

@@ -68,8 +68,19 @@ namespace Nodes {
     bool operator==(DataType a);
   };
 
+  struct Type {
+    char* name;
+    DataType* dt;
+    std::string toString() {
+      return std::string(name) + "(" + dt->toString() + ")";
+    }
+    bool operator==(Type a) {
+      return std::string(this->name) == std::string(a.name);
+    }
+  };
+
   struct Variable {
-    DataType* type;
+    Type* type;
     char* name;
     bool inStack;
     union {
@@ -105,7 +116,7 @@ namespace Nodes {
     char* identifier;
     bool pub;
     bool isInline;
-    DataType* returnType;
+    Type* returnType;
     Lists::List<Variable*>* params;
     Statement* stmt;
     std::string getLabel() {

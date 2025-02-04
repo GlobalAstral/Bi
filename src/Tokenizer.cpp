@@ -188,6 +188,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           Assembly::AssemblyTokenizer asmTokenizer{buff};
           Lists::List<Assembly::Token*>* code = asmTokenizer.parseAsm();
           tokens.push(new Tokens::Token{Tokens::TokenType::ASM, line, {.assemblyCode = code}});
+        } else if (buf == "type") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::TYPE, line});
         } else {
           char* buffer = (char*)malloc(buf.size());
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));

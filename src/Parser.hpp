@@ -14,8 +14,10 @@ namespace Parser {
       Nodes::Expression* parseExpr(bool paren = false);
       Nodes::Statement* parseStmt(Lists::List<Nodes::Statement*>& ret);
       Nodes::DataType* parseDataType();
+      Nodes::Type* parseType();
       Lists::List<Nodes::Statement*> parseStmts();
       bool tryParseDataType();
+      bool isType();
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
         if (std::string(a->identifier) != std::string(b->identifier)) return false;
@@ -33,6 +35,10 @@ namespace Parser {
       Lists::List<Nodes::Variable*> vars{[](Nodes::Variable* a, Nodes::Variable* b) {
         return std::string(a->name) == std::string(b->name);
       }};
+      Lists::List<Nodes::Type*> declaredTypes{[](Nodes::Type* a, Nodes::Type* b) {
+        return *a == *b;
+      }};
+      bool skipStmt = false;
       int _peek = 0;
       Lists::List<Tokens::Token*> content;
       bool hasPeek() {
