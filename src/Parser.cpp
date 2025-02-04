@@ -64,12 +64,12 @@ bool Parser::Parser::tryParseDataType() {
   return true;
 }
 
-Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret, Lists::List<Nodes::Variable*>& vars) {
+Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret) {
   if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
     Lists::List<Nodes::Statement*> scp{};
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
-      scp.push(parseStmt(ret, vars));
+      scp.push(parseStmt(ret));
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
@@ -116,7 +116,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
       this->declaredMethods.pop(index);
     }
 
-    Nodes::Statement* stmt = parseStmt(ret, vars);
+    Nodes::Statement* stmt = parseStmt(ret);
     if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope", peek(-1)->line);
     mtd->stmt = stmt;
     this->declaredMethods.push(mtd);
@@ -132,8 +132,8 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
         char* param = token->params.at(j);
         if (param[0] != '@') continue;
         param = const_cast<char*>(std::string(param).erase(0, 1).c_str());
-        if (!vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist", peek(-1)->line);
-        Nodes::Variable* var = vars.at(vars.index(new Nodes::Variable{.name = param}));
+        if (!this->vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist", peek(-1)->line);
+        Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = param}));
         token->params.pop(j);
         if (!var->inStack) {
           token->params.insert(var->location.reg, j);
@@ -153,9 +153,9 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
 
     Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
-    if (vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
+    if (this->vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
     Nodes::Statement* decl = new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}};
-    vars.push(var);
+    this->vars.push(var);
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
       return decl;
     }
@@ -168,14 +168,14 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
     Tokens::Token* ident = consume();
     tryConsumeError(Tokens::TokenType::EQUALS, "Expected '='");
     int index = -1;
-    for (int i = 0; i < vars.size(); i++) {
-      if (std::string(vars.at(i)->name) != std::string(ident->value.buffer)) continue;
+    for (int i = 0; i < this->vars.size(); i++) {
+      if (std::string(this->vars.at(i)->name) != std::string(ident->value.buffer)) continue;
       index = i;
       break;
     }
     if (index == -1) Errors::error("Variable '" + std::string(ident->value.buffer) + "' does not exist", peek(-1)->line);
     Nodes::Expression* expr = parseExpr();
-    Nodes::Variable* var = vars.at(index);
+    Nodes::Variable* var = this->vars.at(index);
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, expr}}};
   }
@@ -185,12 +185,9 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret,
 
 Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {
   Lists::List<Nodes::Statement*> ret{};
-  Lists::List<Nodes::Variable*> variables{[](Nodes::Variable* a, Nodes::Variable* b) {
-    return std::string(a->name) == std::string(b->name);
-  }};
 
   while (hasPeek()) {
-    Nodes::Statement* stmt = parseStmt(ret, variables);
+    Nodes::Statement* stmt = parseStmt(ret);
     ret.push(stmt);
   }
   return ret;

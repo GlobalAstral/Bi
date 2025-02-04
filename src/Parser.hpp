@@ -12,7 +12,7 @@ namespace Parser {
       }
 
       Nodes::Expression* parseExpr(bool paren = false);
-      Nodes::Statement* parseStmt(Lists::List<Nodes::Statement*>& ret, Lists::List<Nodes::Variable*>& vars);
+      Nodes::Statement* parseStmt(Lists::List<Nodes::Statement*>& ret);
       Nodes::DataType* parseDataType();
       Lists::List<Nodes::Statement*> parseStmts();
       bool tryParseDataType();
@@ -29,6 +29,9 @@ namespace Parser {
           }
         }
         return flag;
+      }};
+      Lists::List<Nodes::Variable*> vars{[](Nodes::Variable* a, Nodes::Variable* b) {
+        return std::string(a->name) == std::string(b->name);
       }};
       int _peek = 0;
       Lists::List<Tokens::Token*> content;
