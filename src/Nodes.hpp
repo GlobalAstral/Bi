@@ -11,7 +11,7 @@ namespace Nodes {
     method, scope, asm_code, var_decl, var_set
   };
   enum class ExpressionType {
-    literal, identifier
+    literal, identifier, label
   };
   enum class DTypeT {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
@@ -30,11 +30,17 @@ namespace Nodes {
     }
   };
 
+  struct Method;
+  struct LabelExpr {
+    Method* method;
+  };
+
   struct Expression {
     ExpressionType type;
     union {
       LiteralExpr literal;
       IdentifierExpr ident;
+      LabelExpr label;
     } u;
     bool operator==(Expression a) {
       if (this->type != a.type) return false;
@@ -54,6 +60,8 @@ namespace Nodes {
           return std::string(this->u.ident.identifier);
         case ExpressionType::literal :
           return this->u.literal.lit.toString();
+        case ExpressionType::label :
+          return "Label of Method";
         default:
           return "NULL";
       }
@@ -129,6 +137,34 @@ namespace Nodes {
         ss << params->at(i)->type->toString();
         ss << "_";
       }
+      return ss.str();
+    }
+    bool operator==(Method a) {
+      if (std::string(this->identifier) != std::string(a.identifier)) return false;
+        if (!(*(this->returnType) == *(a.returnType))) return false;
+        if (this->params->size() != a.params->size()) return false;
+        bool flag = true;
+        for (int i = 0; i < this->params->size(); i++) {
+          if (!(this->params->at(i)->type == a.params->at(i)->type)) {
+            flag = false;
+            break;
+          }
+        }
+        return flag;
+    }
+    std::string toString() {
+      std::stringstream ss{};
+      ss << ((this->pub) ? "PUBLIC" : "");
+      ss << ((this->isInline) ? "INLINE" : "");
+      ss << " METHOD(";
+      ss << this->returnType->toString();
+      ss << "|";
+      for (int i = 0; i < this->params->size(); i++) {
+        Variable* var = this->params->at(i);
+        ss << var->type->toString();
+        ss << ",";
+      }
+      ss << ")";
       return ss.str();
     }
   };

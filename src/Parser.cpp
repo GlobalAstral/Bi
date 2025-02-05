@@ -1,5 +1,14 @@
 #include <Parser.hpp>
 
+Lists::List<Nodes::Method*> Parser::Parser::getMethodsWithName(char* identifier) {
+  Lists::List<Nodes::Method*> ret{[](Nodes::Method* a, Nodes::Method* b) {return *a == *b;}};
+  for (int i = 0; i < this->declaredMethods.size(); i++) {
+    if (std::string(this->declaredMethods.at(i)->identifier) == std::string(identifier))
+      ret.push(declaredMethods.at(i));
+  }
+  return ret;
+}
+
 Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
@@ -9,7 +18,27 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
     expression = new Nodes::Expression{Nodes::ExpressionType::literal, {.literal = {consume()->value.lit}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* t = consume();
-    expression = new Nodes::Expression{Nodes::ExpressionType::identifier, {.ident = {t->value.buffer}}};
+    Lists::List<Nodes::Method*> correspondingMethods = getMethodsWithName(t->value.buffer);
+    if (correspondingMethods.size() >= 1) {
+      if (correspondingMethods.size() == 1) {
+        return new Nodes::Expression{Nodes::ExpressionType::label, {.label = {correspondingMethods.at(0)}}};
+      } else {
+        tryConsumeError(Tokens::TokenType::OPEN_ANGLE, "Expected Type Specifier");
+        Nodes::Type* returnType = parseType();
+        Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
+
+        bool notFound = false;
+        while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_ANGLE))) {
+          tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
+          Nodes::Type* paramType = parseType();
+          params->push(new Nodes::Variable{paramType});
+        }
+        if (notFound) Errors::error("Expected '>'", peek(-1)->line);
+        Nodes::Method* mtd = new Nodes::Method{t->value.buffer, true, false, returnType, params};
+        if (!correspondingMethods.contains(mtd)) Errors::error("Method doesn't exist", peek(-1)->line);
+        return new Nodes::Expression{Nodes::ExpressionType::label, {.label = {mtd}}};
+      }
+    }
   }
 
   if (paren)

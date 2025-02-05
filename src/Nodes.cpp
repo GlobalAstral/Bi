@@ -40,17 +40,7 @@ std::string Nodes::Statement::toString() {
   std::stringstream ss{};
   switch (this->type) {
     case Nodes::StatementType::method :
-      ss << ((this->u.method->pub) ? "PUBLIC" : "");
-      ss << ((this->u.method->isInline) ? "INLINE" : "");
-      ss << " METHOD(";
-      ss << this->u.method->returnType->toString();
-      ss << "|";
-      for (int i = 0; i < this->u.method->params->size(); i++) {
-        Variable* var = this->u.method->params->at(i);
-        ss << var->type->toString();
-        ss << ",";
-      }
-      ss << ")";
+      ss << this->u.method->toString();
       break;
     case Nodes::StatementType::asm_code :
       ss << "Assembly code '" << this->u.asmCode->toString() << "'";
