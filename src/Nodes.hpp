@@ -24,9 +24,9 @@ namespace Nodes {
     }
   };
   struct IdentifierExpr {
-    char* identifier;
+    Variable* var;
     bool operator==(IdentifierExpr a) {
-      return std::string(this->identifier) == std::string(a.identifier);
+      return std::string(this->var->name) == std::string(a.var->name);
     }
   };
 
@@ -63,7 +63,7 @@ namespace Nodes {
     std::string toString() {
       switch (this->type) {
         case ExpressionType::identifier :
-          return std::string(this->u.ident.identifier);
+          return std::string(this->u.ident.var->name);
         case ExpressionType::literal :
           return this->u.literal.lit.toString();
         case ExpressionType::label :

@@ -60,6 +60,10 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
       } else {
         return new Nodes::Expression{Nodes::ExpressionType::label, {.label = {mtd}}};
       }
+    } else {
+      if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
+        Errors::error("Variable does not exists", peek(-1)->line);
+      return new Nodes::Expression{Nodes::ExpressionType::identifier, {.ident = {this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}))}}};
     }
   }
 
