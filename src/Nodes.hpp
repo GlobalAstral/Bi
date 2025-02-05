@@ -11,7 +11,7 @@ namespace Nodes {
     method, scope, asm_code, var_decl, var_set
   };
   enum class ExpressionType {
-    literal, identifier, label
+    literal, identifier, label, method_call
   };
   enum class DTypeT {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
@@ -31,8 +31,13 @@ namespace Nodes {
   };
 
   struct Method;
+  struct Expression;
   struct LabelExpr {
     Method* method;
+  };
+  struct MethodCall {
+    Method* method;
+    Lists::List<Expression*>* params;
   };
 
   struct Expression {
@@ -41,6 +46,7 @@ namespace Nodes {
       LiteralExpr literal;
       IdentifierExpr ident;
       LabelExpr label;
+      MethodCall method_call;
     } u;
     bool operator==(Expression a) {
       if (this->type != a.type) return false;
@@ -62,6 +68,8 @@ namespace Nodes {
           return this->u.literal.lit.toString();
         case ExpressionType::label :
           return "Label of Method";
+        case ExpressionType::method_call :
+          return "Call of Method";
         default:
           return "NULL";
       }

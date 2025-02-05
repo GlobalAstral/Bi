@@ -18,6 +18,7 @@ namespace Parser {
       Lists::List<Nodes::Statement*> parseStmts();
       bool tryParseDataType();
       bool isType();
+      Nodes::Method* parseMethodReference(Tokens::Token* identifier);
       Lists::List<Nodes::Method*> getMethodsWithName(char* name);
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
