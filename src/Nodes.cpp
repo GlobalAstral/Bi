@@ -57,3 +57,125 @@ std::string Nodes::Statement::toString() {
   }
   return ss.str();
 };
+
+bool Nodes::IdentifierExpr::operator==(IdentifierExpr a)  {
+  return std::string(this->var->name) == std::string(a.var->name);
+}
+
+std::string Nodes::Expression::toString()  {
+  switch (this->type) {
+    case ExpressionType::identifier :
+      return std::string(this->u.ident.var->name);
+    case ExpressionType::literal :
+      return this->u.literal.lit.toString();
+    case ExpressionType::label :
+      return "Label of Method";
+    case ExpressionType::method_call :
+      return "Call of Method";
+    default:
+      return "NULL";
+  }
+}
+
+bool Nodes::LiteralExpr::operator==(LiteralExpr a) {
+  return this->lit == a.lit;
+}
+
+bool Nodes::Expression::operator==(Expression a)  {
+  if (this->type != a.type) return false;
+  switch (this->type) {
+    case ExpressionType::identifier :
+      return this->u.ident == a.u.ident;
+    case ExpressionType::literal :
+      return this->u.literal == a.u.literal;
+    default:
+      return false;
+  }
+  return false;
+}
+
+std::string Nodes::Type::toString() {
+  return std::string(name) + "(" + dt->toString() + ")";
+}
+
+bool Nodes::Type::operator==(Type a) {
+  return std::string(this->name) == std::string(a.name);
+}
+
+std::string Nodes::Variable::toString() {
+  std::string s = "Variable '" + std::string(this->name) + "' of type '" + this->type->toString() + "' at ";
+  if (inStack) {
+    char buf[255];
+    sprintf(buf, "%d", this->location.offset);
+    s = s + "Stack location " + std::string(buf);
+  } else {
+    s = s + "Register location " + std::string(this->location.reg);
+  }
+  return s;
+}
+
+bool Nodes::Variable::operator==(Variable a) {
+  if (a.type != this->type) return false;
+  if (std::string(a.name) != std::string(this->name)) return false;
+  return true;
+}
+
+std::string Nodes::Method::getLabel() {
+  std::stringstream ss;
+  ss << identifier;
+  ss << "_";
+  ss << returnType->toString();
+  ss << "_";
+  for (int i = 0; i < params->size(); i++) {
+    ss << params->at(i)->type->toString();
+    ss << "_";
+  }
+  return ss.str();
+}
+
+bool Nodes::Method::operator==(Method a) {
+  if (std::string(this->identifier) != std::string(a.identifier)) return false;
+    if (!(*(this->returnType) == *(a.returnType))) return false;
+    if (this->params->size() != a.params->size()) return false;
+    bool flag = true;
+    for (int i = 0; i < this->params->size(); i++) {
+      if (!(this->params->at(i)->type == a.params->at(i)->type)) {
+        flag = false;
+        break;
+      }
+    }
+    return flag;
+}
+
+std::string Nodes::Method::toString() {
+  std::stringstream ss{};
+  ss << ((this->pub) ? "PUBLIC" : "");
+  ss << ((this->isInline) ? "INLINE" : "");
+  ss << " METHOD(";
+  ss << this->returnType->toString();
+  ss << "|";
+  for (int i = 0; i < this->params->size(); i++) {
+    Variable* var = this->params->at(i);
+    ss << var->type->toString();
+    ss << ",";
+  }
+  ss << ")";
+  return ss.str();
+}
+
+std::string Nodes::AssemblyCode::toString() {
+  std::stringstream ss;
+  for (int i = 0; i < code->size(); i++) {
+    Assembly::Token* tok = code->at(i);
+    ss << tok->instruction << " ";
+    for (int j = 0; j < tok->params.size(); j++) {
+      char* param = tok->params.at(j);
+      ss << param;
+      if (j < tok->params.size()-1)
+        ss << ", ";
+    }
+    if (i < code->size()-1)
+      ss << std::endl;
+  }
+  return ss.str();
+}
