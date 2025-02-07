@@ -3,5 +3,5 @@ type double membox 8;
 
 method public int b();
 method public double b(int c);
-int a = b<double, double>(10);
+int a = b<double, int>(10);
 

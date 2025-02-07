@@ -63,6 +63,7 @@ bool Nodes::IdentifierExpr::operator==(IdentifierExpr a)  {
 }
 
 std::string Nodes::Expression::toString()  {
+  std::stringstream ss;
   switch (this->type) {
     case ExpressionType::identifier :
       return std::string(this->u.ident.var->name);
@@ -178,4 +179,30 @@ std::string Nodes::AssemblyCode::toString() {
       ss << std::endl;
   }
   return ss.str();
+}
+
+Nodes::Type* Nodes::getLiteralType(Literal::Literal literal) {
+  int size;
+  switch (literal.type) {
+    case Literal::LiteralType::integer:
+    case Literal::LiteralType::floating:
+      size = 4;
+      break;
+    case Literal::LiteralType::long_int:
+    case Literal::LiteralType::binary:
+    case Literal::LiteralType::hexadecimal:
+    case Literal::LiteralType::string:
+    case Literal::LiteralType::double_floating:
+      size = 8;
+      break;
+    case Literal::LiteralType::character:
+      size = 1;
+      break;
+    default:
+      Errors::error("Invalid Literal");
+  }
+  Literal::Literal lit = {Literal::LiteralType::integer, {.i = size}};
+  Nodes::Expression* e = new Nodes::Expression{Nodes::ExpressionType::literal, new Nodes::Type{}, {.literal = {lit}}};
+  Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::MEMBOX, e};
+  return new Nodes::Type{const_cast<char*>(":literal"), dt};
 }

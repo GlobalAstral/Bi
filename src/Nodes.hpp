@@ -17,6 +17,7 @@ namespace Nodes {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
   };
 
+  struct Type;
   struct Method;
   struct Expression;
   struct LiteralExpr;
@@ -50,6 +51,7 @@ namespace Nodes {
 
   struct Expression {
     ExpressionType type;
+    Type* retType;
     union {
       LiteralExpr literal;
       IdentifierExpr ident;
@@ -128,5 +130,7 @@ namespace Nodes {
     } u;
     std::string toString();
   };
+
+  Type* getLiteralType(Literal::Literal lit);
 }
 

@@ -37,7 +37,8 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
 
   Nodes::Expression* expression;
   if (peek()->type == Tokens::TokenType::LITERAL) {
-    expression = new Nodes::Expression{Nodes::ExpressionType::literal, {.literal = {consume()->value.lit}}};
+    Literal::Literal lit = consume()->value.lit;
+    expression = new Nodes::Expression{Nodes::ExpressionType::literal, Nodes::getLiteralType(lit), {.literal = {lit}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* t = consume();
     if (getMethodsWithName(t->value.buffer).size() > 0) {
@@ -56,14 +57,16 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
         }
         if (notFound) Errors::error("Expected ')'", peek(-1)->line);
         if (params->size() != mtd->params->size()) Errors::error("No definition of method with such parameters", peek(-1)->line);
-        return new Nodes::Expression{Nodes::ExpressionType::method_call, {.method_call = {mtd, params}}};
+        return new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
       } else {
-        return new Nodes::Expression{Nodes::ExpressionType::label, {.label = {mtd}}};
+        Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
+        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>(":label"), dt}, {.label = {mtd}}};
       }
     } else {
       if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
         Errors::error("Variable does not exists", peek(-1)->line);
-      return new Nodes::Expression{Nodes::ExpressionType::identifier, {.ident = {this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}))}}};
+      Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
+      return new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
     }
   }
 
