@@ -295,6 +295,11 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     if (ex->type != Nodes::ExpressionType::literal) Errors::error("Expected String literal");
     if (ex->u.literal.lit.type != Literal::LiteralType::string) Errors::error("Expected String literal");
     char* ident = ex->u.literal.lit.u.s;
+    tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
+    Nodes::Expression* expr = parseExpr();
+    if (expr->type != Nodes::ExpressionType::literal) Errors::error("Expected Integer literal");
+    if (expr->u.literal.lit.type != Literal::LiteralType::integer) Errors::error("Expected Integer literal");
+    int prec = expr->u.literal.lit.u.i;
     tryConsumeError(Tokens::TokenType::CLOSE_ANGLE, "Expected '>'");
     Registers::RegMapping mapping = Registers::getMappings(left->regType);
     Nodes::Variable* l = new Nodes::Variable{left, left_ident->value.buffer, false, {.reg = mapping.A}};

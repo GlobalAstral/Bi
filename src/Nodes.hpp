@@ -85,6 +85,7 @@ namespace Nodes {
     Variable* rType;
     Statement* stmt;
     Type* returnType;
+    int precedence;
     bool operator==(Operation a);
     std::string toString();
   };
