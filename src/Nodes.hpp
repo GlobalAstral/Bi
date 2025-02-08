@@ -5,10 +5,11 @@
 #include <sstream>
 #include <AssemblyTokenizer.hpp>
 #include <sstream>
+#include <Registers.hpp>
 
 namespace Nodes {
   enum class StatementType {
-    method, scope, asm_code, var_decl, var_set
+    method, scope, asm_code, var_decl, var_set, var_init
   };
   enum class ExpressionType {
     literal, identifier, label, method_call
@@ -73,8 +74,19 @@ namespace Nodes {
   struct Type {
     char* name;
     DataType* dt;
+    Registers::RegisterType regType;
     std::string toString();
     bool operator==(Type a);
+  };
+
+  struct Operation {
+    char* identifier;
+    Variable* lType;
+    Variable* rType;
+    Statement* stmt;
+    Type* returnType;
+    bool operator==(Operation a);
+    std::string toString();
   };
 
   struct Variable {
@@ -82,7 +94,7 @@ namespace Nodes {
     char* name;
     bool inStack;
     union {
-      char* reg;
+      const char* reg;
       int offset;
     } location;
 
@@ -119,6 +131,11 @@ namespace Nodes {
     Expression* value;
   };
 
+  struct VariableInitialization {
+    Statement* decl;
+    Statement* setting;
+  };
+
   struct Statement {
     StatementType type;
     union {
@@ -127,6 +144,7 @@ namespace Nodes {
       AssemblyCode* asmCode;
       VariableDeclaration* var_decl;
       VariableSetting* var_set;
+      VariableInitialization* var_init;
     } u;
     std::string toString();
   };

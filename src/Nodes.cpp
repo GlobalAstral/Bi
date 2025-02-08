@@ -204,5 +204,32 @@ Nodes::Type* Nodes::getLiteralType(Literal::Literal literal) {
   Literal::Literal lit = {Literal::LiteralType::integer, {.i = size}};
   Nodes::Expression* e = new Nodes::Expression{Nodes::ExpressionType::literal, new Nodes::Type{}, {.literal = {lit}}};
   Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::MEMBOX, e};
-  return new Nodes::Type{const_cast<char*>(":literal"), dt};
+  Registers::RegisterType reg;
+  if (size*8 == 8)
+    reg = Registers::RegisterType::b8;
+  else if (size*8 == 16)
+    reg = Registers::RegisterType::b16;
+  else if (size*8 == 32)
+    if (literal.type == Literal::LiteralType::floating)
+      reg = Registers::RegisterType::simd;
+    else
+      reg = Registers::RegisterType::b32;
+  else if (size*8 == 64)
+    if (literal.type == Literal::LiteralType::floating)
+      reg = Registers::RegisterType::simd;
+    else
+      reg = Registers::RegisterType::b64;
+  return new Nodes::Type{const_cast<char*>(":literal"), dt, reg};
+}
+
+bool Nodes::Operation::operator==(Operation a) {
+  if (std::string(this->identifier) != std::string(a.identifier)) return false;
+  if (!(this->returnType == a.returnType)) return false;
+  if (!(this->lType == a.lType)) return false;
+  if (!(this->rType == a.rType)) return false;
+  return true;
+}
+
+std::string Nodes::Operation::toString() {
+  return "Operation(" + this->lType->toString() + ", " + this->rType->toString() + ", " + this->identifier + " | " + this->returnType->toString() + ")";
 }

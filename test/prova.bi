@@ -1,7 +1,6 @@
-type int membox 4;
-type double membox 8;
+type int membox 4 bits 32;
 
-method public int b();
-method public double b(int c);
-int a = b<double, int>(10);
-
+operation<int a, int b, "+"> asm {
+  mov eax, @a
+  add @a, @b
+} int;

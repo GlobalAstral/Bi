@@ -142,7 +142,9 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       while ((notFound = !try_consume('"')))
         buf += consume();
       if (notFound) Errors::error("Expected closing quote", line);
-      tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::string, {.s = const_cast<char*>(buf.c_str())}}}});
+      char* buffer = (char*)malloc(buf.size());
+      strcpy(buffer, buf.c_str());
+      tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::string, {.s = buffer}}}});
     } else {
       if (isalpha(peek())) {
         std::string buf = "";
@@ -174,6 +176,12 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::UNION, line});
         } else if (buf == "inline") {
           tokens.push(new Tokens::Token{Tokens::TokenType::INLINE, line});
+        } else if (buf == "operation") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::OPERATION, line});
+        } else if (buf == "bits") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::BITS, line});
+        } else if (buf == "simd") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::SIMD, line});
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();

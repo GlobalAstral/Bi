@@ -39,7 +39,10 @@ namespace Tokens {
     INLINE,
     ASM,
     EQUALS,
-    TYPE
+    TYPE,
+    OPERATION,
+    BITS,
+    SIMD
   };
 
   struct Token {

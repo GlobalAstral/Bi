@@ -60,7 +60,7 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
         return new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
       } else {
         Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
-        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>(":label"), dt}, {.label = {mtd}}};
+        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>(":label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
       }
     } else {
       if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
@@ -139,12 +139,12 @@ bool Parser::Parser::isType() {
   return (peek()->type == Tokens::TokenType::IDENTIFIER && this->declaredTypes.contains(new Nodes::Type{peek()->value.buffer}));
 }
 
-Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret) {
+Nodes::Statement* Parser::Parser::parseStmt() {
   if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
     Lists::List<Nodes::Statement*> scp{};
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
-      scp.push(parseStmt(ret));
+      scp.push(parseStmt());
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
@@ -183,8 +183,11 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
       if (existing->stmt != NULL) Errors::error("Method already exists", peek(-1)->line);
       this->declaredMethods.pop(index);
     }
-
-    Nodes::Statement* stmt = parseStmt(ret);
+    Lists::List<Nodes::Variable*> old_vars = vars.copy();
+    for (int i = 0; i < params->size(); i++)
+      vars.push(params->at(i));
+    Nodes::Statement* stmt = parseStmt();
+    this->vars = old_vars;
     if (stmt->type != Nodes::StatementType::scope) Errors::error("Expected scope", peek(-1)->line);
     mtd->stmt = stmt;
     this->declaredMethods.push(mtd);
@@ -204,7 +207,7 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
         Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = param}));
         token->params.pop(j);
         if (!var->inStack) {
-          token->params.insert(var->location.reg, j);
+          token->params.insert((char*)(var->location.reg), j);
         } else {
           char offset[255];
           sprintf(offset, "%d", var->location.offset);
@@ -230,8 +233,8 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
     tryConsumeError(Tokens::TokenType::EQUALS, "Expected ';' or '='");
     Nodes::Expression* ex = parseExpr();
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
-    ret.push(decl);
-    return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
+    Nodes::Statement* setting = new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
+    return new Nodes::Statement{Nodes::StatementType::var_init, {.var_init = new Nodes::VariableInitialization{decl, setting}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
     tryConsumeError(Tokens::TokenType::EQUALS, "Expected '='");
@@ -250,9 +253,63 @@ Nodes::Statement* Parser::Parser::parseStmt(Lists::List<Nodes::Statement*>& ret)
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
     Nodes::DataType* dt = parseDataType();
     if (dt->type == Nodes::DTypeT::INVALID) Errors::error("Expected valid DataType", peek(-1)->line);
+    tryConsumeError(Tokens::TokenType::BITS, "Expected bits directive");
+    Registers::RegisterType regtype;
+    if (tryConsume(Tokens::TokenType::SIMD))
+      regtype = Registers::RegisterType::simd;
+    else {
+      Nodes::Expression* expr = parseExpr();
+      if (expr->type != Nodes::ExpressionType::literal) Errors::error("Expected integer literal", peek(-1)->line);
+      if (expr->u.literal.lit.type != Literal::LiteralType::integer) Errors::error("Expected integer literal", peek(-1)->line);
+      int l = expr->u.literal.lit.u.i;
+      switch (l) {
+        case 8 :
+          regtype = Registers::RegisterType::b8;
+          break;
+        case 16 :
+          regtype = Registers::RegisterType::b16;
+          break;
+        case 32 :
+          regtype = Registers::RegisterType::b32;
+          break;
+        case 64 :
+          regtype = Registers::RegisterType::b64;
+          break;
+      }
+    }
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
-    Nodes::Type* t = new Nodes::Type{ident->value.buffer, dt};
+    Nodes::Type* t = new Nodes::Type{ident->value.buffer, dt, regtype};
     this->declaredTypes.push(t);
+    this->skipStmt = true;
+    return new Nodes::Statement{};
+
+  } else if (tryConsume(Tokens::TokenType::OPERATION)) {
+    tryConsumeError(Tokens::TokenType::OPEN_ANGLE, "Expected '<'");
+    Nodes::Type* left = parseType();
+    Tokens::Token* left_ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+    tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
+    Nodes::Type* right = parseType();
+    Tokens::Token* right_ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+    tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
+    Nodes::Expression* ex = parseExpr();
+    if (ex->type != Nodes::ExpressionType::literal) Errors::error("Expected String literal");
+    if (ex->u.literal.lit.type != Literal::LiteralType::string) Errors::error("Expected String literal");
+    char* ident = ex->u.literal.lit.u.s;
+    tryConsumeError(Tokens::TokenType::CLOSE_ANGLE, "Expected '>'");
+    Registers::RegMapping mapping = Registers::getMappings(left->regType);
+    Nodes::Variable* l = new Nodes::Variable{left, left_ident->value.buffer, false, {.reg = mapping.A}};
+    mapping = Registers::getMappings(right->regType);
+    Nodes::Variable* r = new Nodes::Variable{right, right_ident->value.buffer, false, {.reg = mapping.C}};
+    vars.push(l);
+    vars.push(r);
+    Nodes::Statement* stmt = parseStmt();
+    vars.pop(vars.index(l));
+    vars.pop(vars.index(r));
+    Nodes::Type* returnType = parseType();
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+
+    Nodes::Operation* op = new Nodes::Operation{ident, l, r, stmt, returnType};
+    this->declaredOperations.push(op);
     this->skipStmt = true;
     return new Nodes::Statement{};
   }
@@ -264,7 +321,7 @@ Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {
   Lists::List<Nodes::Statement*> ret{};
 
   while (hasPeek()) {
-    Nodes::Statement* stmt = parseStmt(ret);
+    Nodes::Statement* stmt = parseStmt();
     if (this->skipStmt) {
       this->skipStmt = false;
     } else {

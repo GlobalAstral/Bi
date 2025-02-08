@@ -3,6 +3,7 @@
 #include <iostream>
 #include <Tokenizer.hpp>
 #include <Nodes.hpp>
+#include <Registers.hpp>
 
 namespace Parser {
   class Parser {
@@ -12,7 +13,7 @@ namespace Parser {
       }
 
       Nodes::Expression* parseExpr(bool paren = false);
-      Nodes::Statement* parseStmt(Lists::List<Nodes::Statement*>& ret);
+      Nodes::Statement* parseStmt();
       Nodes::DataType* parseDataType();
       Nodes::Type* parseType();
       Lists::List<Nodes::Statement*> parseStmts();
@@ -28,6 +29,9 @@ namespace Parser {
         return std::string(a->name) == std::string(b->name);
       }};
       Lists::List<Nodes::Type*> declaredTypes{[](Nodes::Type* a, Nodes::Type* b) {
+        return *a == *b;
+      }};
+      Lists::List<Nodes::Operation*> declaredOperations{[](Nodes::Operation* a, Nodes::Operation* b) {
         return *a == *b;
       }};
       bool skipStmt = false;
