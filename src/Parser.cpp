@@ -142,10 +142,12 @@ bool Parser::Parser::isType() {
 Nodes::Statement* Parser::Parser::parseStmt() {
   if (tryConsume(Tokens::TokenType::OPEN_BRACKET)) {
     Lists::List<Nodes::Statement*> scp{};
+    Lists::List<Nodes::Variable*> old_vars = vars.copy();
     bool notFound = false;
     while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_BRACKET)))
       scp.push(parseStmt());
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
+    this->vars = old_vars;
     Nodes::Scope* s = new Nodes::Scope{};
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
 
