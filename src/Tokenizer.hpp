@@ -38,11 +38,11 @@ namespace Tokens {
     PUBLIC,
     INLINE,
     ASM,
-    EQUALS,
     TYPE,
     OPERATION,
     BITS,
-    SIMD
+    SIMD,
+    SYMBOLS
   };
 
   struct Token {

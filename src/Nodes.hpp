@@ -12,7 +12,7 @@ namespace Nodes {
     method, scope, asm_code, var_decl, var_set, var_init
   };
   enum class ExpressionType {
-    literal, identifier, label, method_call
+    literal, identifier, label, method_call, binary
   };
   enum class DTypeT {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
@@ -31,6 +31,7 @@ namespace Nodes {
   struct AssemblyCode;
   struct VariableDeclaration;
   struct VariableSetting;
+  struct Operation;
 
   struct LiteralExpr {
     Literal::Literal lit;
@@ -50,6 +51,12 @@ namespace Nodes {
     Lists::List<Expression*>* params;
   };
 
+  struct BinaryExpr {
+    Expression* left;
+    Expression* right;
+    Operation* operation;
+  };
+
   struct Expression {
     ExpressionType type;
     Type* retType;
@@ -58,6 +65,7 @@ namespace Nodes {
       IdentifierExpr ident;
       LabelExpr label;
       MethodCall method_call;
+      BinaryExpr bin;
     } u;
     bool operator==(Expression a);
     std::string toString();

@@ -131,8 +131,6 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_BRACKET, line});
     } else if (try_consume(';')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::SEMICOLON, line});
-    } else if (peek(-1) != '=' && try_consume('=') && peek(1) != '=') {
-      tokens.push(new Tokens::Token{Tokens::TokenType::EQUALS, line});
     } else if (try_consume('\'')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::LITERAL, line, {.lit = {Literal::LiteralType::character, {.c = consume()}}}});
       if (!try_consume('\'')) Errors::error("Expected closing single quote", line);
@@ -203,6 +201,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.buffer = buffer}});
         }
+      } else if (!isalpha(peek()) && !isdigit(peek())) {
+        std::string buf = "";
+        while (!isalpha(peek()) && !isdigit(peek()) && peek() != ' ' && peek() != '\n') {
+          buf += consume();
+        }
+        char* buffer = (char*)malloc(buf.size());
+        strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
+        tokens.push(new Tokens::Token{Tokens::TokenType::SYMBOLS, line, {.buffer = buffer}});
       } else {
         std::string buf = "";
         bool hex = false;

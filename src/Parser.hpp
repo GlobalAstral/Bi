@@ -12,7 +12,7 @@ namespace Parser {
         this->content = tokens;
       }
 
-      Nodes::Expression* parseExpr(bool paren = false);
+      Nodes::Expression* parseExpr(bool paren = false, bool bin = true);
       Nodes::Statement* parseStmt();
       Nodes::DataType* parseDataType();
       Nodes::Type* parseType();
@@ -21,6 +21,7 @@ namespace Parser {
       bool isType();
       Nodes::Method* parseMethodReference(Tokens::Token* identifier);
       Lists::List<Nodes::Method*> getMethodsWithName(char* name);
+      Nodes::Operation* operationOrError(char* identifier);
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
         return *a == *b;

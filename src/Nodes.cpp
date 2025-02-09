@@ -51,6 +51,9 @@ std::string Nodes::Statement::toString() {
     case Nodes::StatementType::var_set :
       ss << "Setting of variable '" << this->u.var_set->var->toString() << "' to value '" << this->u.var_set->value->toString() << "'";
       break;
+    case Nodes::StatementType::var_init :
+      ss << "Init of variable '" << this->u.var_init->decl->toString() << "' to '" << this->u.var_init->setting->toString() << "'";
+      break;
     default:
       ss << "NULL";
       break;
@@ -73,6 +76,8 @@ std::string Nodes::Expression::toString()  {
       return "Label of Method";
     case ExpressionType::method_call :
       return "Call of Method";
+    case ExpressionType::binary :
+      return "BINARY(" + this->u.bin.left->toString() + " | " + this->u.bin.right->toString() + ", " + this->u.bin.operation->toString() + ")";
     default:
       return "NULL";
   }

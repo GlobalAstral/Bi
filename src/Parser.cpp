@@ -31,7 +31,15 @@ Nodes::Method* Parser::Parser::parseMethodReference(Tokens::Token* t) {
   }
 }
 
-Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
+Nodes::Operation* Parser::Parser::operationOrError(char* identifier) {
+  for (int i = 0; i < this->declaredOperations.size(); i++)
+    if (std::string(this->declaredOperations.at(i)->identifier) == std::string(identifier))
+      return this->declaredOperations.at(i);
+  Errors::error("Operation not declared", peek(-1)->line);
+  return {};
+}
+
+Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
 
@@ -67,6 +75,27 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren) {
         Errors::error("Variable does not exists", peek(-1)->line);
       Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
       return new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
+    }
+  }
+
+  if (bin && peek()->type == Tokens::TokenType::SYMBOLS) {
+    Nodes::Operation* op = operationOrError(peek()->value.buffer);
+    int left_prec = op->precedence;
+    while (peek()->type == Tokens::TokenType::SYMBOLS) {
+      Nodes::Expression* left = expression;
+      Nodes::Operation* op1 = operationOrError(consume()->value.buffer);
+      Nodes::Expression* right = parseExpr();
+      int right_prec = (right->type == Nodes::ExpressionType::binary) ? right->u.bin.operation->precedence : op1->precedence;
+      Nodes::Expression* expr = new Nodes::Expression{Nodes::ExpressionType::binary, op1->returnType, {.bin = {left, right, op1}}};
+      if (right_prec > left_prec) {
+        expr->u.bin.right = left;
+        expr->u.bin.left = right;
+      } else {
+        expr->u.bin.left = left;
+        expr->u.bin.right = right;
+      }
+      expression = expr;
+      left_prec = right_prec;
     }
   }
 
@@ -232,14 +261,16 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
       return decl;
     }
-    tryConsumeError(Tokens::TokenType::EQUALS, "Expected ';' or '='");
+    Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected ';' or '='");
+    if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
     Nodes::Expression* ex = parseExpr();
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     Nodes::Statement* setting = new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
     return new Nodes::Statement{Nodes::StatementType::var_init, {.var_init = new Nodes::VariableInitialization{decl, setting}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
-    tryConsumeError(Tokens::TokenType::EQUALS, "Expected '='");
+    Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '='");
+    if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
     int index = -1;
     for (int i = 0; i < this->vars.size(); i++) {
       if (std::string(this->vars.at(i)->name) != std::string(ident->value.buffer)) continue;
@@ -315,7 +346,9 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     Nodes::Type* returnType = parseType();
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
 
-    Nodes::Operation* op = new Nodes::Operation{ident, l, r, stmt, returnType};
+    Nodes::Operation* op = new Nodes::Operation{ident, l, r, stmt, returnType, prec};
+    if (declaredOperations.contains(op))
+      Errors::error("Operation already declared", peek(-1)->line);
     this->declaredOperations.push(op);
     this->skipStmt = true;
     return new Nodes::Statement{};
