@@ -224,7 +224,7 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.buffer = buffer}});
         }
-      } else if (!isalpha(peek()) && !isdigit(peek())) {
+      } else if (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),<>[]{}")) {
         std::string buf = "";
         while (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),<>[]{}")) {
           buf += consume();
