@@ -22,9 +22,7 @@ namespace Tokens {
     OPEN_PAREN,
     CLOSE_PAREN,
     COMMA,
-    LESS,
-    GREATER,
-    OPEN_ANGLE = LESS,
+    OPEN_ANGLE,
     CLOSE_ANGLE,
     OPEN_SQUARE,
     CLOSE_SQUARE,
@@ -82,4 +80,6 @@ namespace Tokens {
         return false;
       }
   };
+
+  bool isChar(char c, std::string s);
 }

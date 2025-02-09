@@ -282,6 +282,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     Nodes::Variable* var = this->vars.at(index);
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, expr}}};
+  
   } else if (tryConsume(Tokens::TokenType::TYPE)) {
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
     Nodes::DataType* dt = parseDataType();
@@ -324,10 +325,8 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     Nodes::Type* right = parseType();
     Tokens::Token* right_ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
     tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
-    Nodes::Expression* ex = parseExpr();
-    if (ex->type != Nodes::ExpressionType::literal) Errors::error("Expected String literal");
-    if (ex->u.literal.lit.type != Literal::LiteralType::string) Errors::error("Expected String literal");
-    char* ident = ex->u.literal.lit.u.s;
+    Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected symbols");
+    char* ident = identifier->value.buffer;
     tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
     Nodes::Expression* expr = parseExpr();
     if (expr->type != Nodes::ExpressionType::literal) Errors::error("Expected Integer literal");

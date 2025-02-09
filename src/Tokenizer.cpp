@@ -79,6 +79,21 @@ std::string Tokens::Token::toString() {
     case TokenType::ASM :
       ss << "ASSEMBLY";
       break;
+    case TokenType::SYMBOLS :
+      ss << "SYMBOLS";
+      break;
+    case TokenType::OPERATION :
+      ss << "OPERATION";
+      break;
+    case TokenType::TYPE :
+      ss << "TYPE";
+      break;
+    case TokenType::BITS :
+      ss << "BITS";
+      break;
+    case TokenType::SIMD :
+      ss << "SIMD";
+      break;
     default:
       ss << "NULL";
       break;
@@ -94,6 +109,14 @@ std::string Tokens::Token::toString() {
   ss << " at line ";
   ss << line;
   return ss.str();
+}
+
+bool Tokens::isChar(char c, std::string s) {
+  for (char ch : s) {
+    if (c == ch)
+      return true;
+  }
+  return false;
 }
 
 Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
@@ -118,9 +141,9 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
     } else if (try_consume(')')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_PAREN, line});
     } else if (try_consume('>')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::GREATER, line});
+      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_ANGLE, line});
     } else if (try_consume('<')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::LESS, line});
+      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_ANGLE, line});
     } else if (try_consume('[')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_SQUARE, line});
     } else if (try_consume(']')) {
@@ -203,7 +226,7 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
         }
       } else if (!isalpha(peek()) && !isdigit(peek())) {
         std::string buf = "";
-        while (!isalpha(peek()) && !isdigit(peek()) && peek() != ' ' && peek() != '\n') {
+        while (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),<>[]{}")) {
           buf += consume();
         }
         char* buffer = (char*)malloc(buf.size());
