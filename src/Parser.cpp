@@ -95,6 +95,9 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
         expr->u.bin.right = right;
       }
       expression = expr;
+      bool cond = *(expression->u.bin.left->retType->dt) == *(expression->u.bin.operation->lType->type->dt);
+      cond = cond && *(expression->u.bin.right->retType->dt) == *(expression->u.bin.operation->rType->type->dt);
+      if (!cond) Errors::error("Operation type mismatch", peek(-1)->line);
       left_prec = right_prec;
     }
   }
