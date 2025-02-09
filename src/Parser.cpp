@@ -68,7 +68,7 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
         return new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
       } else {
         Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
-        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>(":label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
+        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>("0label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
       }
     } else {
       if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 

@@ -224,7 +224,7 @@ Nodes::Type* Nodes::getLiteralType(Literal::Literal literal) {
       reg = Registers::RegisterType::simd;
     else
       reg = Registers::RegisterType::b64;
-  return new Nodes::Type{const_cast<char*>(":literal"), dt, reg};
+  return new Nodes::Type{const_cast<char*>("0literal"), dt, reg};
 }
 
 bool Nodes::Operation::operator==(Operation a) {
