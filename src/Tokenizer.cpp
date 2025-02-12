@@ -28,12 +28,6 @@ std::string Tokens::Token::toString() {
     case TokenType::COMMA:
       ss << "COMMA";
       break;
-    case TokenType::OPEN_ANGLE:
-      ss << "OPEN_ANGLE";
-      break;
-    case TokenType::CLOSE_ANGLE:
-      ss << "CLOSE_ANGLE";
-      break;
     case TokenType::OPEN_SQUARE:
       ss << "OPEN_SQUARE";
       break;
@@ -140,10 +134,6 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
       tokens.push(new Tokens::Token{Tokens::TokenType::COMMA, line});
     } else if (try_consume(')')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_PAREN, line});
-    } else if (try_consume('>')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::CLOSE_ANGLE, line});
-    } else if (try_consume('<')) {
-      tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_ANGLE, line});
     } else if (try_consume('[')) {
       tokens.push(new Tokens::Token{Tokens::TokenType::OPEN_SQUARE, line});
     } else if (try_consume(']')) {
@@ -224,9 +214,9 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           strcpy(buffer, const_cast<char*>(std::string(buf).c_str()));
           tokens.push(new Tokens::Token{Tokens::TokenType::IDENTIFIER, line, {.buffer = buffer}});
         }
-      } else if (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),<>[]{}")) {
+      } else if (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),[]{}")) {
         std::string buf = "";
-        while (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),<>[]{}")) {
+        while (!isalpha(peek()) && !isdigit(peek()) && !isChar(peek(), " \n;#(),[]{}")) {
           buf += consume();
         }
         char* buffer = (char*)malloc(buf.size());

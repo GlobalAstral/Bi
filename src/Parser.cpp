@@ -14,12 +14,13 @@ Nodes::Method* Parser::Parser::parseMethodReference(Tokens::Token* t) {
   if (correspondingMethods.size() == 1) {
     return correspondingMethods.at(0);
   } else {
-    tryConsumeError(Tokens::TokenType::OPEN_ANGLE, "Expected Type Specifier");
+    Tokens::Token* angle = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected Type Specifier");
+    if (std::string(angle->value.buffer) != "<") Errors::error("Expected '<'", peek(-1)->line);
     Nodes::Type* returnType = parseType();
     Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
 
     bool notFound = false;
-    while ((notFound = !tryConsume(Tokens::TokenType::CLOSE_ANGLE))) {
+    while ((notFound = std::string(tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '>'")->value.buffer) != ">")) {
       tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
       Nodes::Type* paramType = parseType();
       params->push(new Nodes::Variable{paramType});
@@ -78,7 +79,7 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
     }
   }
 
-  if (bin && peek()->type == Tokens::TokenType::SYMBOLS) {
+  if (bin && peek()->type == Tokens::TokenType::SYMBOLS && std::string(peek()->value.buffer) != "<" && std::string(peek()->value.buffer) != ">") {
     Nodes::Operation* op = operationOrError(peek()->value.buffer);
     int left_prec = op->precedence;
     while (peek()->type == Tokens::TokenType::SYMBOLS) {
@@ -321,7 +322,8 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     return new Nodes::Statement{};
 
   } else if (tryConsume(Tokens::TokenType::OPERATION)) {
-    tryConsumeError(Tokens::TokenType::OPEN_ANGLE, "Expected '<'");
+    Tokens::Token* open_angle = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '<'");
+    if (std::string(open_angle->value.buffer) != "<") Errors::error("Expected '<'", peek(-1)->line);
     Nodes::Type* left = parseType();
     Tokens::Token* left_ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
     tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
@@ -335,7 +337,8 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     if (expr->type != Nodes::ExpressionType::literal) Errors::error("Expected Integer literal");
     if (expr->u.literal.lit.type != Literal::LiteralType::integer) Errors::error("Expected Integer literal");
     int prec = expr->u.literal.lit.u.i;
-    tryConsumeError(Tokens::TokenType::CLOSE_ANGLE, "Expected '>'");
+    Tokens::Token* close_angle = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '>'");
+    if (std::string(close_angle->value.buffer) != ">") Errors::error("Expected '>'", peek(-1)->line);
     Registers::RegMapping mapping = Registers::getMappings(left->regType);
     Nodes::Variable* l = new Nodes::Variable{left, left_ident->value.buffer, false, {.reg = mapping.A}};
     mapping = Registers::getMappings(right->regType);

@@ -8,12 +8,15 @@ Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::T
   Definition* def = new Definition{};
   
   def->name = std::string(ident->value.buffer);
-  if (try_consume(Tokens::TokenType::OPEN_ANGLE))
+  if (peek()->type == Tokens::TokenType::SYMBOLS) {
+    if (std::string(consume()->value.buffer) != "<")
+      Errors::error("Expected '<'", peek(-1)->line);
     while (peek()->type == Tokens::TokenType::IDENTIFIER) {
       def->params.push(consume());
-      if (try_consume(Tokens::TokenType::CLOSE_ANGLE)) break;
+      if (peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ">") break;
       if (!try_consume(Tokens::TokenType::COMMA)) Errors::error("Comma expected between identifiers", peek(-1)->line);
     }
+  }
   bool notFound = false;
   while ((notFound = !try_consume(Tokens::TokenType::PREPROCESSOR))) {
     if (_peek == this->content.size()-1) break;
@@ -21,6 +24,7 @@ Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::T
   }
   if (notFound) Errors::error("Expected '#'", peek(-1)->line);
   return def;
+
 }
 
 bool Preprocessor::Preprocessor::isComputable(Lists::List<Definition*>& definitions) {
@@ -90,10 +94,10 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
         if (a->type == Tokens::TokenType::LITERAL) {return a->value.lit == b->value.lit;}
         return true;
       }};
-    if (try_consume(Tokens::TokenType::OPEN_ANGLE)) {
+    if (peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == "<") {
       Lists::List<Tokens::Token*>* buf = new Lists::List<Tokens::Token*>{};
       int paramIndex = 0;
-      while (!try_consume(Tokens::TokenType::CLOSE_ANGLE)) {
+      while (!(peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ">")) {
         if (try_consume(Tokens::TokenType::COMMA)) {
           Lists::List<Tokens::Token*> tmp = buf->copy();
           map.set(def->params.at(paramIndex), &tmp);

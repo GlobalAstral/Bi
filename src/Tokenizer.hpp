@@ -22,8 +22,6 @@ namespace Tokens {
     OPEN_PAREN,
     CLOSE_PAREN,
     COMMA,
-    OPEN_ANGLE,
-    CLOSE_ANGLE,
     OPEN_SQUARE,
     CLOSE_SQUARE,
     OPEN_BRACKET,
