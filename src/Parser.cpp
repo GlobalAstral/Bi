@@ -122,7 +122,7 @@ Nodes::DataType* Parser::Parser::parseDataType() {
       Nodes::Type* dt = parseType();
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
-      ret.push(new Nodes::Variable{dt, ident->value.buffer});
+      ret.push(new Nodes::Variable{dt, ident->value.buffer, true});
     }
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     return new Nodes::DataType{Nodes::DTypeT::STRUCT, new Nodes::Expression{}, ret};
@@ -136,7 +136,7 @@ Nodes::DataType* Parser::Parser::parseDataType() {
 
       Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier");
       tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
-      ret.push(new Nodes::Variable{dt, ident->value.buffer});
+      ret.push(new Nodes::Variable{dt, ident->value.buffer, true});
     }
     if (notFound) Errors::error("Expected '}'", peek(-1)->line);
     return new Nodes::DataType{Nodes::DTypeT::UNION, new Nodes::Expression{}, ret};
@@ -273,8 +273,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     return new Nodes::Statement{Nodes::StatementType::var_init, {.var_init = new Nodes::VariableInitialization{decl, setting}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
-    Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '='");
-    if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
+
     int index = -1;
     for (int i = 0; i < this->vars.size(); i++) {
       if (std::string(this->vars.at(i)->name) != std::string(ident->value.buffer)) continue;
@@ -282,8 +281,26 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       break;
     }
     if (index == -1) Errors::error("Variable '" + std::string(ident->value.buffer) + "' does not exist", peek(-1)->line);
-    Nodes::Expression* expr = parseExpr();
     Nodes::Variable* var = this->vars.at(index);
+
+    while ((var->type->dt->type == Nodes::DTypeT::STRUCT || var->type->dt->type == Nodes::DTypeT::UNION) && peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ".") {
+      Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+      int index = -1;
+      for (int i = 0; i < var->type->dt->inner.size(); i++) {
+        if (std::string(identifier->value.buffer) == std::string(var->type->dt->inner.at(i)->name)) {
+          index = i;
+          break;
+        }
+      }
+      if (index < 0) Errors::error("Property not found", peek(-1)->line);
+      var = var->type->dt->inner.at(index);
+    }
+
+    Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '='");
+    if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
+    
+    Nodes::Expression* expr = parseExpr();
+    
     tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
     return new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, expr}}};
   

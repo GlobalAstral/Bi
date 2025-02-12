@@ -1,14 +1,11 @@
 type int membox 4 bits 32;
 
-operation<int a, int b, +, 2> asm {
-  mov eax, @a
-  add @a, @b
-} int;
+type franco struct {
+  int a;
+  int b;
+} bits 32;
 
-operation<int a, int b, *, 3> asm {
-  mov eax, @a
-  mov ecx, @b
-  mul eax
-} int;
+franco f;
 
-int a = 69 + 420 * 1;
+f.a = 69;
+f.b = 420;
