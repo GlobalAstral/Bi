@@ -162,5 +162,6 @@ Lists::List<Tokens::Token*> Preprocessor::Preprocessor::preprocessAll() {
   while (_peek < content.size()) {
     preprocess(ret, definitions);
   }
+
   return ret;
 }

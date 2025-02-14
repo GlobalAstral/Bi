@@ -75,7 +75,6 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
           tryConsumeError(Tokens::TokenType::COMMA, "Comma Expected");
         }
         if (notFound) Errors::error("Expected ')'", peek(-1)->line);
-        if (params->size() != mtd->params->size()) Errors::error("No definition of method with such parameters", peek(-1)->line);
         expression = new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
       } else {
         Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
