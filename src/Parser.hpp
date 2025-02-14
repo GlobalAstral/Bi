@@ -22,6 +22,7 @@ namespace Parser {
       Nodes::Method* parseMethodReference(Tokens::Token* identifier);
       Lists::List<Nodes::Method*> getMethodsWithName(char* name);
       Nodes::Operation* operationOrError(char* identifier);
+      Nodes::Cast* castOrError(Nodes::Type* from, Nodes::Type* to);
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
         return *a == *b;
@@ -34,6 +35,13 @@ namespace Parser {
       }};
       Lists::List<Nodes::Operation*> declaredOperations{[](Nodes::Operation* a, Nodes::Operation* b) {
         return *a == *b;
+      }};
+      Lists::List<Nodes::Cast*> declaredCasts{[](Nodes::Cast* a, Nodes::Cast* b) {
+        if (!(a->input->type == b->input->type)) 
+          return false;
+        if (!(a->output_type == b->output_type))
+          return false;
+        return true;
       }};
       bool skipStmt = false;
       int _peek = 0;

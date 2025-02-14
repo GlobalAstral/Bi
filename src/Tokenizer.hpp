@@ -38,7 +38,9 @@ namespace Tokens {
     OPERATION,
     BITS,
     SIMD,
-    SYMBOLS
+    SYMBOLS,
+    CAST,
+    AS
   };
 
   struct Token {

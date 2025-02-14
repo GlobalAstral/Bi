@@ -40,6 +40,16 @@ Nodes::Operation* Parser::Parser::operationOrError(char* identifier) {
   return {};
 }
 
+Nodes::Cast* Parser::Parser::castOrError(Nodes::Type* from, Nodes::Type* to) {
+  for (int i = 0; i < this->declaredCasts.size(); i++) {
+    Nodes::Cast* cast = this->declaredCasts.at(i);
+    if (cast->input->type == from && cast->output_type == to)
+      return cast;
+  }
+  Errors::error("Cast not declared", peek(-1)->line);
+  return {};
+}
+
 Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
@@ -66,17 +76,26 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
         }
         if (notFound) Errors::error("Expected ')'", peek(-1)->line);
         if (params->size() != mtd->params->size()) Errors::error("No definition of method with such parameters", peek(-1)->line);
-        return new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
+        expression = new Nodes::Expression{Nodes::ExpressionType::method_call, mtd->returnType, {.method_call = {mtd, params}}};
       } else {
         Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
-        return new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>("0label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
+        expression = new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>("0label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
       }
     } else {
       if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
         Errors::error("Variable does not exists", peek(-1)->line);
       Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
-      return new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
+      expression = new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
     }
+  }
+
+  if (tryConsume(Tokens::TokenType::AS)) {
+    if (expression->type == Nodes::ExpressionType::literal)
+      Errors::error("Cast of literal value. USE LITERAL CASTS!", peek(-1)->line);
+    Nodes::Type* dest = parseType();
+    Nodes::Cast* cast = castOrError(expression->retType, dest);
+    Nodes::Expression* expr = new Nodes::Expression{Nodes::ExpressionType::cast, dest, {.cast = {cast, expression}}};
+    expression = expr;
   }
 
   if (bin && peek()->type == Tokens::TokenType::SYMBOLS && std::string(peek()->value.buffer) != "<" && std::string(peek()->value.buffer) != ">") {
@@ -372,6 +391,27 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     if (declaredOperations.contains(op))
       Errors::error("Operation already declared", peek(-1)->line);
     this->declaredOperations.push(op);
+    this->skipStmt = true;
+    return new Nodes::Statement{};
+  } else if (tryConsume(Tokens::TokenType::CAST)) {
+    Tokens::Token* open_angle = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '<'");
+    if (std::string(open_angle->value.buffer) != "<") Errors::error("Expected '<'", peek(-1)->line);
+
+    Nodes::Variable* in = new Nodes::Variable{parseType(), tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier")->value.buffer, false};
+    in->location.reg = Registers::getMappings(in->type->regType).A;
+    tryConsumeError(Tokens::TokenType::COMMA, "Expected comma");
+    Nodes::Type* out = parseType();
+
+    Tokens::Token* close_angle = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '>'");
+    if (std::string(close_angle->value.buffer) != ">") Errors::error("Expected '>'", peek(-1)->line);
+    this->vars.push(in);
+    Nodes::Statement* stmt = parseStmt();
+    this->vars.pop(this->vars.index(in));
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    Nodes::Cast* cast = new Nodes::Cast{in, out, stmt};
+    if (this->declaredCasts.contains(cast))
+      Errors::error("Cast already declared", peek(-1)->line);
+    this->declaredCasts.push(cast);
     this->skipStmt = true;
     return new Nodes::Statement{};
   }

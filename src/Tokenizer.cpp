@@ -193,6 +193,10 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::BITS, line});
         } else if (buf == "simd") {
           tokens.push(new Tokens::Token{Tokens::TokenType::SIMD, line});
+        } else if (buf == "cast") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::CAST, line});
+        } else if (buf == "as") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::AS, line});
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();

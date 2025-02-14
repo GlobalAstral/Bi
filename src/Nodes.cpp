@@ -78,6 +78,8 @@ std::string Nodes::Expression::toString()  {
       return "Call of Method";
     case ExpressionType::binary :
       return "BINARY(" + this->u.bin.left->toString() + " | " + this->u.bin.right->toString() + ", " + this->u.bin.operation->toString() + ")";
+    case ExpressionType::cast :
+      return this->u.cast.expr->toString() + " AS " + this->u.cast.cast->output_type->toString();
     default:
       return "NULL";
   }
