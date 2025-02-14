@@ -42,6 +42,9 @@ std::string Nodes::Statement::toString() {
     case Nodes::StatementType::method :
       ss << this->u.method->toString();
       break;
+    case Nodes::StatementType::scope :
+      ss << "Scope";
+      break;
     case Nodes::StatementType::asm_code :
       ss << "Assembly code '" << this->u.asmCode->toString() << "'";
       break;
@@ -53,6 +56,14 @@ std::string Nodes::Statement::toString() {
       break;
     case Nodes::StatementType::var_init :
       ss << "Init of variable '" << this->u.var_init->decl->toString() << "' to '" << this->u.var_init->setting->toString() << "'";
+      break;
+    case Nodes::StatementType::if_stmt :
+      ss << "if (";
+      ss << this->u.if_stmt->expr->toString();
+      ss << ") then ";
+      ss << this->u.if_stmt->stmt->toString();
+      ss << " else ";
+      ss << this->u.if_stmt->else_stmt->toString();
       break;
     default:
       ss << "NULL";

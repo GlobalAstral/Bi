@@ -417,6 +417,15 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     this->declaredCasts.push(cast);
     this->skipStmt = true;
     return new Nodes::Statement{};
+  } else if (tryConsume(Tokens::TokenType::IF)) {
+    tryConsumeError(Tokens::TokenType::OPEN_PAREN, "Expected '('");
+    Nodes::Expression* expr = parseExpr();
+    tryConsumeError(Tokens::TokenType::CLOSE_PAREN, "Expected ')'");
+    Nodes::Statement* stmt = parseStmt();
+    Nodes::IfStmt* if_stmt = new Nodes::IfStmt{expr, stmt};
+    if (tryConsume(Tokens::TokenType::ELSE))
+      if_stmt->else_stmt = parseStmt();
+    return new Nodes::Statement{Nodes::StatementType::if_stmt, {.if_stmt = if_stmt}};
   }
   Errors::error("Invalid Statement", peek(-1)->line);
   return {};

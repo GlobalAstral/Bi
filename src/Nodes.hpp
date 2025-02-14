@@ -9,7 +9,7 @@
 
 namespace Nodes {
   enum class StatementType {
-    method, scope, asm_code, var_decl, var_set, var_init
+    method, scope, asm_code, var_decl, var_set, var_init, if_stmt
   };
   enum class ExpressionType {
     literal, identifier, label, method_call, cast, binary
@@ -140,6 +140,11 @@ namespace Nodes {
     bool operator==(Method a);
     std::string toString();
   };
+  struct IfStmt {
+    Expression* expr;
+    Statement* stmt;
+    Statement* else_stmt;
+  };
 
   struct AssemblyCode {
     Lists::List<Assembly::Token*>* code;
@@ -168,6 +173,7 @@ namespace Nodes {
       VariableDeclaration* var_decl;
       VariableSetting* var_set;
       VariableInitialization* var_init;
+      IfStmt* if_stmt;
       //TODO IF; FOR; WHILE; 
     } u;
     std::string toString();

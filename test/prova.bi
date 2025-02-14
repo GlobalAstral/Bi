@@ -1,3 +1,6 @@
-#include "test\library.bi"#
 
-int x = printf("Gianni", 23);
+if (10) {
+
+} else asm {
+  
+}
