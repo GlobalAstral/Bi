@@ -40,7 +40,8 @@ namespace Tokens {
     SIMD,
     SYMBOLS,
     CAST,
-    AS
+    AS,
+    INCLUDE
   };
 
   struct Token {

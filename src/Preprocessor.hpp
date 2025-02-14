@@ -1,9 +1,10 @@
 #pragma once
 
+#include <iostream>
+#include <fstream>
 #include <Tokenizer.hpp>
 #include <Errors.hpp>
 #include <Dict.hpp>
-
 namespace Preprocessor {
 
   typedef struct {

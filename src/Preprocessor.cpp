@@ -78,6 +78,30 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
         else
           preprocess(ret, definitions);
       }
+    } else if (try_consume(Tokens::TokenType::INCLUDE)) {
+      if (peek()->type != Tokens::TokenType::LITERAL)
+        Errors::error("Expected string literal path", peek(-1)->line);
+      Tokens::Token* token = consume();
+      if (token->value.lit.type != Literal::LiteralType::string)
+        Errors::error("Expected string literal path", peek(-1)->line);
+      
+      char* path = token->value.lit.u.s;
+      std::ifstream file{std::string(path)};
+      std::stringstream content("");
+      std::string buf;
+      while (std::getline(file, buf)) {
+        content << buf;
+        content << "\n";
+      };
+      file.close();
+      
+      Tokens::Tokenizer inc{content};
+      Lists::List<Tokens::Token*> tokens = inc.tokenize();
+      Preprocessor pre{tokens};
+      Lists::List<Tokens::Token*> cont = pre.preprocessAll();
+      for (int i = 0; i < cont.size(); i++) {
+        ret.push(cont.at(i));
+      }
     }
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
