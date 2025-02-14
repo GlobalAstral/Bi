@@ -41,7 +41,8 @@ namespace Tokens {
     SYMBOLS,
     CAST,
     AS,
-    INCLUDE
+    INCLUDE,
+    EXTERN
   };
 
   struct Token {

@@ -204,6 +204,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     return new Nodes::Statement{ Nodes::StatementType::scope, { .scope = s} };
 
   } else if (tryConsume(Tokens::TokenType::METHOD)) {
+    bool ext = tryConsume(Tokens::TokenType::EXTERN);
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
     bool inline_ = tryConsume(Tokens::TokenType::INLINE);
     Nodes::Type* dt = parseType();
@@ -222,7 +223,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       if (notClosed) Errors::error("Expected ')'", peek(-1)->line);
     }
 
-    Nodes::Method* mtd = new Nodes::Method{ident->value.buffer, pub, inline_, dt, params};
+    Nodes::Method* mtd = new Nodes::Method{ident->value.buffer, pub, inline_, dt, params, .external = ext};
     bool exists = this->declaredMethods.contains(mtd);
 
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
@@ -230,6 +231,9 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       this->declaredMethods.push(mtd);
       return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
     }
+
+    if (ext)
+      Errors::error("Cannot have implementation of external method", peek(-1)->line);
     
     if (exists) {
       int index = this->declaredMethods.index(mtd);

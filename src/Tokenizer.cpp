@@ -199,6 +199,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::AS, line});
         } else if (buf == "include") {
           tokens.push(new Tokens::Token{Tokens::TokenType::INCLUDE, line});
+        } else if (buf == "extern") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::EXTERN, line});
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();

@@ -1,6 +1,4 @@
-type int membox 4 bits 32;
-type long membox 8 bits 64;
 
-cast<int a, long> asm {
-  movsx rax, @a
-};
+type int membox 4 bits 32;
+
+method extern public int p(int a);

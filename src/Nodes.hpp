@@ -135,6 +135,7 @@ namespace Nodes {
     Type* returnType;
     Lists::List<Variable*>* params;
     Statement* stmt;
+    bool external;
     std::string getLabel();
     bool operator==(Method a);
     std::string toString();
