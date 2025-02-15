@@ -203,6 +203,14 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::EXTERN, line});
         } else if (buf == "else") {
           tokens.push(new Tokens::Token{Tokens::TokenType::ELSE, line});
+        } else if (buf == "while") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::WHILE, line});
+        } else if (buf == "do") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::DO, line});
+        } else if (buf == "for") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::FOR, line});
+        } else if (buf == "return") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::RETURN, line});
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();

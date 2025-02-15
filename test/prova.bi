@@ -1,6 +1,4 @@
 
-if (10) {
-
-} else asm {
-  
+asm {
+  mov @e(a)
 }

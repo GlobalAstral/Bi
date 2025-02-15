@@ -43,7 +43,11 @@ namespace Tokens {
     AS,
     INCLUDE,
     EXTERN,
-    ELSE
+    ELSE,
+    WHILE,
+    DO,
+    FOR,
+    RETURN
   };
 
   struct Token {

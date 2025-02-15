@@ -51,6 +51,9 @@ Nodes::Cast* Parser::Parser::castOrError(Nodes::Type* from, Nodes::Type* to) {
 }
 
 Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
+  //TODO REFERENCE AND DEREFERENCE
+  //TODO add struct / union inline initialization
+  //TODO add identifier index/offset
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
 
@@ -251,6 +254,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
     
   } else if (peek()->type == Tokens::TokenType::ASM) {
+    //TODO add prefix to variable to change register size @PREFIX()
     Tokens::Token* asmCode = consume();
     Lists::List<Assembly::Token*>* code = new Lists::List<Assembly::Token*>{};
     *code = asmCode->value.assemblyCode->copy();
@@ -426,9 +430,38 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     if (tryConsume(Tokens::TokenType::ELSE))
       if_stmt->else_stmt = parseStmt();
     return new Nodes::Statement{Nodes::StatementType::if_stmt, {.if_stmt = if_stmt}};
+  } else if (tryConsume(Tokens::TokenType::WHILE)) {
+    tryConsumeError(Tokens::TokenType::OPEN_PAREN, "Expected '('");
+    Nodes::Expression* expr = parseExpr();
+    tryConsumeError(Tokens::TokenType::CLOSE_PAREN, "Expected ')'");
+    Nodes::Statement* stmt = parseStmt();
+    return new Nodes::Statement{Nodes::StatementType::while_stmt, {.while_stmt = new Nodes::WhileStmt{expr, stmt}}};
+  } else if (tryConsume(Tokens::TokenType::DO)) {
+    Nodes::Statement* stmt = parseStmt();
+    tryConsumeError(Tokens::TokenType::WHILE, "Expected while keyword");
+    tryConsumeError(Tokens::TokenType::OPEN_PAREN, "Expected '('");
+    Nodes::Expression* expr = parseExpr();
+    tryConsumeError(Tokens::TokenType::CLOSE_PAREN, "Expected ')'");
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    return new Nodes::Statement{Nodes::StatementType::do_while_stmt, {.while_stmt = new Nodes::WhileStmt{expr, stmt}}};
+  } else if (tryConsume(Tokens::TokenType::FOR)) {
+    tryConsumeError(Tokens::TokenType::OPEN_PAREN, "Expected '('");
+    Nodes::Variable* var = new Nodes::Variable{parseType(), tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected identifier")->value.buffer, true};
+    vars.push(var);
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    Nodes::Expression* expr = parseExpr();
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    Nodes::Statement* action = parseStmt();
+    tryConsumeError(Tokens::TokenType::CLOSE_PAREN, "Expected ')'");
+    Nodes::Statement* stmt = parseStmt();
+    vars.pop(vars.index(var));
+    return new Nodes::Statement{Nodes::StatementType::for_stmt, {.for_stmt = new Nodes::ForStmt{var, expr, action, stmt}}};
+  } else if (tryConsume(Tokens::TokenType::RETURN)) {
+    Nodes::Expression* expr = parseExpr();
+    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+    return new Nodes::Statement{Nodes::StatementType::return_stmt, {.return_stmt = new Nodes::ReturnStmt{expr}}};
   }
-  Errors::error("Invalid Statement", peek(-1)->line);
-  return {};
+  return new Nodes::Statement{Nodes::StatementType::expr_stmt, {.expr_stmt = new Nodes::ExprStmt{parseExpr()}}};
 }
 
 Lists::List<Nodes::Statement*> Parser::Parser::parseStmts() {

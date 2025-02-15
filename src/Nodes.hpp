@@ -9,7 +9,8 @@
 
 namespace Nodes {
   enum class StatementType {
-    method, scope, asm_code, var_decl, var_set, var_init, if_stmt
+    method, scope, asm_code, var_decl, var_set, var_init, if_stmt, while_stmt, do_while_stmt, for_stmt, 
+    return_stmt, expr_stmt
   };
   enum class ExpressionType {
     literal, identifier, label, method_call, cast, binary
@@ -146,6 +147,26 @@ namespace Nodes {
     Statement* else_stmt;
   };
 
+  struct WhileStmt {
+    Expression* expr;
+    Statement* stmt;
+  };
+
+  struct ForStmt {
+    Variable* var;
+    Expression* expr;
+    Statement* action;
+    Statement* stmt;
+  };
+
+  struct ReturnStmt {
+    Expression* expr;
+  };
+
+  struct ExprStmt {
+    Expression* expr;
+  };
+
   struct AssemblyCode {
     Lists::List<Assembly::Token*>* code;
     std::string toString();
@@ -174,7 +195,10 @@ namespace Nodes {
       VariableSetting* var_set;
       VariableInitialization* var_init;
       IfStmt* if_stmt;
-      //TODO IF; FOR; WHILE; 
+      WhileStmt* while_stmt;
+      ForStmt* for_stmt;
+      ReturnStmt* return_stmt;
+      ExprStmt* expr_stmt;
     } u;
     std::string toString();
   };
