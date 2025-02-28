@@ -15,3 +15,16 @@ Registers::RegMapping Registers::getMappings(Registers::RegisterType type) {
   }
   return {};
 }
+
+Registers::RegisterType Registers::getRegType(char* str) {
+  std::string s = std::string(str);
+  if (s == "b8")
+    return RegisterType::b8;
+  if (s == "b16")
+    return RegisterType::b16;
+  if (s == "b32")
+    return RegisterType::b32;
+  if (s == "b64")
+    return RegisterType::b64;
+  return RegisterType::invalid;
+}

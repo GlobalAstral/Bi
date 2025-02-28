@@ -1,9 +1,12 @@
 
 #pragma once
 
+#include <iostream>
+#include <Errors.hpp>
+
 namespace Registers {
   enum class RegisterType {
-    b8, b16, b32, b64, simd
+    b8, b16, b32, b64, simd, invalid
   };
   struct RegMapping {
     const char* A;
@@ -25,5 +28,6 @@ namespace Registers {
   };
 
   RegMapping getMappings(RegisterType type);
+  RegisterType getRegType(char*);
 }
 

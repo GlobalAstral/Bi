@@ -51,9 +51,9 @@ Nodes::Cast* Parser::Parser::castOrError(Nodes::Type* from, Nodes::Type* to) {
 }
 
 Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
-  //TODO REFERENCE AND DEREFERENCE
-  //TODO add struct / union inline initialization
-  //TODO add identifier index/offset
+  //TODO! REFERENCE AND DEREFERENCE
+  //TODO! add struct / union inline initialization
+  //TODO? add identifier INDEX and struct
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
 
@@ -254,7 +254,6 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     return new Nodes::Statement{Nodes::StatementType::method, {.method = mtd}};
     
   } else if (peek()->type == Tokens::TokenType::ASM) {
-    //TODO add prefix to variable to change register size @PREFIX()
     Tokens::Token* asmCode = consume();
     Lists::List<Assembly::Token*>* code = new Lists::List<Assembly::Token*>{};
     *code = asmCode->value.assemblyCode->copy();
@@ -263,20 +262,9 @@ Nodes::Statement* Parser::Parser::parseStmt() {
       for (int j = 0; j < token->params.size(); j++) {
         char* param = token->params.at(j);
         if (param[0] != '@') continue;
+
         param = const_cast<char*>(std::string(param).erase(0, 1).c_str());
         if (!this->vars.contains(new Nodes::Variable{.name = param})) Errors::error("Variable in assembly code does not exist", peek(-1)->line);
-        Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = param}));
-        token->params.pop(j);
-        if (!var->inStack) {
-          token->params.insert((char*)(var->location.reg), j);
-        } else {
-          char offset[255];
-          sprintf(offset, "%d", var->location.offset);
-          std::string buf = std::string(offset) + "[rbp]";
-          char* repl = (char*)malloc(buf.size()*sizeof(char));
-          strcpy(repl, buf.c_str());
-          token->params.insert(repl, j);
-        }
       }
     }
     return new Nodes::Statement{Nodes::StatementType::asm_code, {.asmCode = new Nodes::AssemblyCode{code}}};
