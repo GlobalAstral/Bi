@@ -4,7 +4,7 @@ Preprocessor::Definition* nominativeDef(std::string name) {
   return new Preprocessor::Definition{name, Lists::List<Tokens::Token*>{}, Lists::List<Tokens::Token*>{}};
 }
 
-Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::Token* ident) {
+Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::Token* ident, Lists::List<Definition*>& definitions) {
   Definition* def = new Definition{};
   
   def->name = std::string(ident->value.buffer);
@@ -20,7 +20,10 @@ Preprocessor::Definition* Preprocessor::Preprocessor::preprocessDefine(Tokens::T
   bool notFound = false;
   while ((notFound = !try_consume(Tokens::TokenType::PREPROCESSOR))) {
     if (_peek == this->content.size()-1) break;
-    def->content.push(consume());
+    if (peek()->type == Tokens::TokenType::IDENTIFIER)
+      preprocessIdentifier(def->content, definitions);
+    else
+      def->content.push(consume());
   }
   if (notFound) Errors::error("Expected '#'", peek(-1)->line);
   return def;
@@ -35,6 +38,53 @@ bool Preprocessor::Preprocessor::isComputable(Lists::List<Definition*>& definiti
   }
   _peek = prev;
   return true;
+}
+
+void Preprocessor::Preprocessor::preprocessIdentifier(Lists::List<Tokens::Token*>& ret, Lists::List<Definition*>& definitions) {
+  Tokens::Token* ident = consume();
+    if (!definitions.contains(nominativeDef(std::string(ident->value.buffer)))) {
+      ret.push(ident);
+      return;
+    }
+
+    Definition* def = definitions.at(definitions.index(nominativeDef(std::string(ident->value.buffer))));
+    Lists::List<Tokens::Token*> temp = def->content.copy();
+    Dict::Dict<Tokens::Token*, Lists::List<Tokens::Token*>*> map{[](Tokens::Token* a, Tokens::Token* b){
+        if (a->type != b->type) return false;
+        if (a->type == Tokens::TokenType::IDENTIFIER) return a->value.buffer == b->value.buffer;
+        if (a->type == Tokens::TokenType::LITERAL) {return a->value.lit == b->value.lit;}
+        return true;
+      }};
+    if (peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == "<") {
+      Lists::List<Tokens::Token*>* buf = new Lists::List<Tokens::Token*>{};
+      int paramIndex = 0;
+      while (!(peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ">")) {
+        if (try_consume(Tokens::TokenType::COMMA)) {
+          Lists::List<Tokens::Token*> tmp = buf->copy();
+          map.set(def->params.at(paramIndex), &tmp);
+          paramIndex++;
+          buf->reset();
+        } else
+          buf->push(consume());
+      }
+      Lists::List<Tokens::Token*> tmp = buf->copy();
+      map.set(def->params.at(paramIndex), &tmp);
+      paramIndex++;
+      buf->reset();
+
+      for (int i = 0; i < def->content.size(); i++) {
+        if (def->content.at(i)->type != Tokens::TokenType::IDENTIFIER) continue;
+        Tokens::Token* ident = def->content.at(i);
+        if (!map.contains(ident)) continue;
+        Lists::List<Tokens::Token*>* replace = map.get(ident);
+        temp.pop(i);
+        for (int j = replace->last(); j >= 0; j--)
+          temp.insert(replace->at(j), i);
+      }
+  }
+  
+    for (int i = 0; i < temp.size(); i++)
+      ret.push(temp.at(i));
 }
 
 Tokens::Token* Preprocessor::Preprocessor::compute(Lists::List<Definition*>& definitions) {
@@ -58,7 +108,7 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
       Tokens::Token* ident = consume();
       if (definitions.contains(nominativeDef(std::string(ident->value.buffer))))
         Errors::error("Definition already exists", peek(-1)->line);
-      definitions.push(preprocessDefine(ident));
+      definitions.push(preprocessDefine(ident, definitions));
     } else if (try_consume(Tokens::TokenType::UNDEFINE)) {
       if (peek()->type != Tokens::TokenType::IDENTIFIER) Errors::error("Expected Identifier", peek(-1)->line);
       Tokens::Token* ident = consume();
@@ -104,50 +154,7 @@ void Preprocessor::Preprocessor::preprocess(Lists::List<Tokens::Token*>& ret, Li
       }
     }
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
-    Tokens::Token* ident = consume();
-    if (!definitions.contains(nominativeDef(std::string(ident->value.buffer)))) {
-      ret.push(ident);
-      return;
-    }
-
-    Definition* def = definitions.at(definitions.index(nominativeDef(std::string(ident->value.buffer))));
-    Lists::List<Tokens::Token*> temp = def->content.copy();
-    Dict::Dict<Tokens::Token*, Lists::List<Tokens::Token*>*> map{[](Tokens::Token* a, Tokens::Token* b){
-        if (a->type != b->type) return false;
-        if (a->type == Tokens::TokenType::IDENTIFIER) return a->value.buffer == b->value.buffer;
-        if (a->type == Tokens::TokenType::LITERAL) {return a->value.lit == b->value.lit;}
-        return true;
-      }};
-    if (peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == "<") {
-      Lists::List<Tokens::Token*>* buf = new Lists::List<Tokens::Token*>{};
-      int paramIndex = 0;
-      while (!(peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ">")) {
-        if (try_consume(Tokens::TokenType::COMMA)) {
-          Lists::List<Tokens::Token*> tmp = buf->copy();
-          map.set(def->params.at(paramIndex), &tmp);
-          paramIndex++;
-          buf->reset();
-        } else
-          buf->push(consume());
-      }
-      Lists::List<Tokens::Token*> tmp = buf->copy();
-      map.set(def->params.at(paramIndex), &tmp);
-      paramIndex++;
-      buf->reset();
-
-      for (int i = 0; i < def->content.size(); i++) {
-        if (def->content.at(i)->type != Tokens::TokenType::IDENTIFIER) continue;
-        Tokens::Token* ident = def->content.at(i);
-        if (!map.contains(ident)) continue;
-        Lists::List<Tokens::Token*>* replace = map.get(ident);
-        temp.pop(i);
-        for (int j = replace->last(); j >= 0; j--)
-          temp.insert(replace->at(j), i);
-      }
-  }
-  
-    for (int i = 0; i < temp.size(); i++)
-      ret.push(temp.at(i));
+    preprocessIdentifier(ret, definitions);
   } else if (isComputable(definitions)) {
     ret.push(compute(definitions));
   } else {

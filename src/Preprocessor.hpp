@@ -20,7 +20,8 @@ namespace Preprocessor {
       }
       Lists::List<Tokens::Token*> preprocessAll();
       void preprocess(Lists::List<Tokens::Token*>& ret, Lists::List<Definition*>& definitions);
-      Definition* preprocessDefine(Tokens::Token* ident);
+      Definition* preprocessDefine(Tokens::Token* ident, Lists::List<Definition*>& definitions);
+      void preprocessIdentifier(Lists::List<Tokens::Token*>& ret, Lists::List<Definition*>& definitions);
       Tokens::Token* compute(Lists::List<Definition*>& definitions);
       bool isComputable(Lists::List<Definition*>& definitions);
     private:
