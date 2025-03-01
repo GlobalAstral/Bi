@@ -13,7 +13,7 @@ namespace Nodes {
     return_stmt, expr_stmt
   };
   enum class ExpressionType {
-    literal, identifier, label, method_call, cast, binary
+    literal, identifier, label, method_call, cast, binary, dereference, reference
   };
   enum class DTypeT {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
@@ -34,6 +34,8 @@ namespace Nodes {
   struct VariableSetting;
   struct Operation;
   struct Cast;
+  struct Dereference;
+  struct Reference;
 
   struct LiteralExpr {
     Literal::Literal lit;
@@ -64,6 +66,14 @@ namespace Nodes {
     Operation* operation;
   };
 
+  struct Reference {
+    Expression* expr;
+  };
+
+  struct Dereference {
+    Expression* expr;
+  };
+
   struct Expression {
     ExpressionType type;
     Type* retType;
@@ -74,6 +84,8 @@ namespace Nodes {
       MethodCall method_call;
       BinaryExpr bin;
       CastExpr cast;
+      Reference ref;
+      Dereference deref;
     } u;
     bool operator==(Expression a);
     std::string toString();

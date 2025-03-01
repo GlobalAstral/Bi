@@ -51,7 +51,6 @@ Nodes::Cast* Parser::Parser::castOrError(Nodes::Type* from, Nodes::Type* to) {
 }
 
 Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
-  //TODO! REFERENCE AND DEREFERENCE
   //TODO! add struct / union inline initialization
   //TODO? add identifier INDEX and struct
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
@@ -89,6 +88,22 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
       Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
       expression = new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
     }
+  } else if (peek()->type == Tokens::TokenType::SYMBOLS) {
+    Tokens::Token* sym = consume();
+    Nodes::ExpressionType expr_type;
+    bool deref = false;
+    if (std::string(sym->value.buffer) == "*") {
+      expr_type = Nodes::ExpressionType::dereference;
+      deref = true;
+    } else if (std::string(sym->value.buffer) == "&")
+      expr_type = Nodes::ExpressionType::reference;
+    else
+      Errors::error("Invalid Expression");
+    Nodes::Expression* expr = parseExpr();
+    if (deref)
+      expression = new Nodes::Expression{expr_type, expr->retType, {.deref = {expr}}};
+    else
+      expression = new Nodes::Expression{expr_type, expr->retType, {.ref = {expr}}};
   }
 
   if (tryConsume(Tokens::TokenType::AS)) {
