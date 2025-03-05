@@ -337,22 +337,23 @@ Nodes::Statement* Parser::Parser::parseStmt() {
         Errors::error("Non Array Type", peek(-1)->line);
       size = parseExpr();
       isArray = true;
-      if (peek()->type != Tokens::TokenType::SYMBOLS)
-        Errors::error("Expected '>'", peek(-1)->line);
-      if (std::string(consume()->value.buffer) != ">")
+      if (peek()->type != Tokens::TokenType::SYMBOLS || std::string(consume()->value.buffer) != ">")
         Errors::error("Expected '>'", peek(-1)->line);
     }
     Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
-    if (this->vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
+    if (this->vars.contains(var)) 
+      Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
     Nodes::Statement* decl = (!isArray) ? new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}} : new Nodes::Statement{Nodes::StatementType::array_decl, {.array_decl = new Nodes::ArrayDeclaration{var, size}}};
-    
+
     this->vars.push(var);
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
       return decl;
     }
     Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected ';' or '='");
     if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
-    if (isArray && tryConsume(Tokens::TokenType::OPEN_SQUARE)) {
+    if (isArray) {
+      if (!tryConsume(Tokens::TokenType::OPEN_SQUARE))
+        Errors::error("Cannot set array to value", peek(-1)->line);
       Nodes::Statement* init = new Nodes::Statement{Nodes::StatementType::array_init, {.array_init = new Nodes::ArrayInitialization{decl, {}}}};
       bool notFound = false;
       while (hasPeek() && (notFound = !tryConsume(Tokens::TokenType::CLOSE_SQUARE))) {
