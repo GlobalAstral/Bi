@@ -50,9 +50,24 @@ Nodes::Cast* Parser::Parser::castOrError(Nodes::Type* from, Nodes::Type* to) {
   return {};
 }
 
+Nodes::Variable* Parser::Parser::getVariable(Nodes::Variable* v) {
+  Nodes::Variable* var = v;
+  while ((var->type->dt->type == Nodes::DTypeT::STRUCT || var->type->dt->type == Nodes::DTypeT::UNION) && peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ".") {
+    Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
+    int index = -1;
+    for (int i = 0; i < var->type->dt->inner.size(); i++) {
+      if (std::string(identifier->value.buffer) == std::string(var->type->dt->inner.at(i)->name)) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) Errors::error("Property not found", peek(-1)->line);
+    var = var->type->dt->inner.at(index);
+  }
+  return var;
+}
+
 Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
-  //TODO! add struct / union inline initialization
-  //TODO? add identifier INDEX and struct
   if (tryConsume(Tokens::TokenType::OPEN_PAREN))
     return parseExpr(true);
 
@@ -61,6 +76,7 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
     Literal::Literal lit = consume()->value.lit;
     expression = new Nodes::Expression{Nodes::ExpressionType::literal, Nodes::getLiteralType(lit), {.literal = {lit}}};
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
+    
     Tokens::Token* t = consume();
     if (getMethodsWithName(t->value.buffer).size() > 0) {
       Nodes::Method* mtd = parseMethodReference(t);
@@ -82,10 +98,21 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
         Nodes::DataType* dt = new Nodes::DataType{Nodes::DTypeT::LABEL};
         expression = new Nodes::Expression{Nodes::ExpressionType::label, new Nodes::Type{const_cast<char*>("0label"), dt, Registers::RegisterType::b64}, {.label = {mtd}}};
       }
+    } else if (tryConsume(Tokens::TokenType::OPEN_SQUARE)) {
+      if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
+        Errors::error("Variable does not exists", peek(-1)->line);
+      Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
+      if (std::string(var->type->name) != POINTER_TYPE && std::string(var->type->name) != ARRAY_TYPE)
+        Errors::error("Cannot take element of non pointer or array type", peek(-1)->line);
+      
+      Nodes::Expression* expr = parseExpr();
+      tryConsumeError(Tokens::TokenType::CLOSE_SQUARE, "Expected ']'");
+      expression = new Nodes::Expression{Nodes::ExpressionType::array_expr, var->type->pointsTo, {.array = {var, expr}}};
     } else {
       if (!this->vars.contains(new Nodes::Variable{.name = t->value.buffer})) 
         Errors::error("Variable does not exists", peek(-1)->line);
       Nodes::Variable* var = this->vars.at(this->vars.index(new Nodes::Variable{.name = t->value.buffer}));
+      var = getVariable(var);
       expression = new Nodes::Expression{Nodes::ExpressionType::identifier, var->type, {.ident = {var}}};
     }
   } else if (peek()->type == Tokens::TokenType::SYMBOLS) {
@@ -104,6 +131,7 @@ Nodes::Expression* Parser::Parser::parseExpr(bool paren, bool bin) {
       expression = new Nodes::Expression{expr_type, expr->retType, {.deref = {expr}}};
     else
       expression = new Nodes::Expression{expr_type, expr->retType, {.ref = {expr}}};
+    //!!
   }
 
   if (tryConsume(Tokens::TokenType::AS)) {
@@ -201,7 +229,23 @@ Nodes::Type* Parser::Parser::parseType() {
   Tokens::Token* ident = consume();
   if (!this->declaredTypes.contains(new Nodes::Type{ident->value.buffer})) 
     Errors::error("Type not declared", peek(-1)->line);
-  return this->declaredTypes.at(this->declaredTypes.index(new Nodes::Type{ident->value.buffer}));
+
+  Nodes::Type* ret = this->declaredTypes.at(this->declaredTypes.index(new Nodes::Type{ident->value.buffer}));
+  if (peek()->type == Tokens::TokenType::SYMBOLS) {
+    Tokens::Token* sym = consume();
+    if (std::string(sym->value.buffer) == "*") {
+      char* name = (char*)malloc(POINTER_TYPE.size()*sizeof(char));
+      strcpy(name, POINTER_TYPE.c_str());
+      ret = PTROF(name, ret);
+    } else
+      Errors::error("Unexpected symbol", peek(-1)->line);
+  } else if (tryConsume(Tokens::TokenType::OPEN_SQUARE)) {
+    tryConsumeError(Tokens::TokenType::CLOSE_SQUARE, "Expected ']'");
+    char* name = (char*)malloc(ARRAY_TYPE.size()*sizeof(char));
+    strcpy(name, ARRAY_TYPE.c_str());
+    ret = ARRAYOF(name, ret);
+  }
+  return ret;
 }
 
 bool Parser::Parser::isType() {
@@ -224,7 +268,7 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     bool ext = tryConsume(Tokens::TokenType::EXTERN);
     bool pub = tryConsume(Tokens::TokenType::PUBLIC);
     bool inline_ = tryConsume(Tokens::TokenType::INLINE);
-    Nodes::Type* dt = parseType();
+    Nodes::Type* dt = tryConsume(Tokens::TokenType::VOID) ? NULL : parseType();
     Tokens::Token* ident = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
     Lists::List<Nodes::Variable*>* params = new Lists::List<Nodes::Variable*>{};
 
@@ -286,20 +330,46 @@ Nodes::Statement* Parser::Parser::parseStmt() {
   } else if (isType()) {
     Nodes::Type* dt = parseType();
     Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
-
+    Nodes::Expression* size = NULL;
+    bool isArray = false;
+    if (peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == "<") {
+      if (dt->pointsTo == NULL) 
+        Errors::error("Non Array Type", peek(-1)->line);
+      size = parseExpr();
+      isArray = true;
+      if (peek()->type != Tokens::TokenType::SYMBOLS)
+        Errors::error("Expected '>'", peek(-1)->line);
+      if (std::string(consume()->value.buffer) != ">")
+        Errors::error("Expected '>'", peek(-1)->line);
+    }
     Nodes::Variable* var = new Nodes::Variable{dt, identifier->value.buffer, true};
     if (this->vars.contains(var)) Errors::error("Variable '" + var->toString() + "' already exists", peek(-1)->line);
-    Nodes::Statement* decl = new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}};
+    Nodes::Statement* decl = (!isArray) ? new Nodes::Statement{Nodes::StatementType::var_decl, {.var_decl = new Nodes::VariableDeclaration{var}}} : new Nodes::Statement{Nodes::StatementType::array_decl, {.array_decl = new Nodes::ArrayDeclaration{var, size}}};
+    
     this->vars.push(var);
     if (tryConsume(Tokens::TokenType::SEMICOLON)) {
       return decl;
     }
     Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected ';' or '='");
     if (std::string(eq->value.buffer) != "=") Errors::error("Expected '='", peek(-1)->line);
-    Nodes::Expression* ex = parseExpr();
-    tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
-    Nodes::Statement* setting = new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
-    return new Nodes::Statement{Nodes::StatementType::var_init, {.var_init = new Nodes::VariableInitialization{decl, setting}}};
+    if (isArray && tryConsume(Tokens::TokenType::OPEN_SQUARE)) {
+      Nodes::Statement* init = new Nodes::Statement{Nodes::StatementType::array_init, {.array_init = new Nodes::ArrayInitialization{decl, {}}}};
+      bool notFound = false;
+      while (hasPeek() && (notFound = !tryConsume(Tokens::TokenType::CLOSE_SQUARE))) {
+        Nodes::Expression* ex = parseExpr();
+        tryConsume(Tokens::TokenType::COMMA);
+        init->u.array_init->entries.push(ex);
+      }
+      if (notFound)
+        Errors::error("Expected ']'", peek(-1)->line);
+      tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+      return init;
+    } else {
+      Nodes::Expression* ex = parseExpr();
+      tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+      Nodes::Statement* setting = new Nodes::Statement{Nodes::StatementType::var_set, {.var_set = new Nodes::VariableSetting{var, ex}}};
+      return new Nodes::Statement{Nodes::StatementType::var_init, {.var_init = new Nodes::VariableInitialization{decl, setting}}};
+    }
   } else if (peek()->type == Tokens::TokenType::IDENTIFIER) {
     Tokens::Token* ident = consume();
 
@@ -311,18 +381,21 @@ Nodes::Statement* Parser::Parser::parseStmt() {
     }
     if (index == -1) Errors::error("Variable '" + std::string(ident->value.buffer) + "' does not exist", peek(-1)->line);
     Nodes::Variable* var = this->vars.at(index);
+    
+    var = getVariable(var);
 
-    while ((var->type->dt->type == Nodes::DTypeT::STRUCT || var->type->dt->type == Nodes::DTypeT::UNION) && peek()->type == Tokens::TokenType::SYMBOLS && std::string(consume()->value.buffer) == ".") {
-      Tokens::Token* identifier = tryConsumeError(Tokens::TokenType::IDENTIFIER, "Expected Identifier");
-      int index = -1;
-      for (int i = 0; i < var->type->dt->inner.size(); i++) {
-        if (std::string(identifier->value.buffer) == std::string(var->type->dt->inner.at(i)->name)) {
-          index = i;
-          break;
-        }
-      }
-      if (index < 0) Errors::error("Property not found", peek(-1)->line);
-      var = var->type->dt->inner.at(index);
+    if (tryConsume(Tokens::TokenType::OPEN_SQUARE)) {
+      Nodes::Expression* ind = parseExpr();
+      tryConsumeError(Tokens::TokenType::CLOSE_SQUARE, "Expected ']'");
+
+      Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '='");
+      if (std::string(eq->value.buffer) != "=") 
+        Errors::error("Expected '='", peek(-1)->line);
+    
+      Nodes::Expression* expr = parseExpr();
+    
+      tryConsumeError(Tokens::TokenType::SEMICOLON, "Expected ';'");
+      return new Nodes::Statement{Nodes::StatementType::array_set, {.array_set = new Nodes::ArraySetting{var, ind, expr}}};
     }
 
     Tokens::Token* eq = tryConsumeError(Tokens::TokenType::SYMBOLS, "Expected '='");

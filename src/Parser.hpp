@@ -5,6 +5,37 @@
 #include <Nodes.hpp>
 #include <Registers.hpp>
 
+#define POINTER_TYPE std::string("0pointer")
+#define ARRAY_TYPE std::string("0array")
+
+#define PTROF(NAME, T) \
+new Nodes::Type{NAME, \
+  new Nodes::DataType{ \
+    Nodes::DTypeT::MEMBOX, \
+    new Nodes::Expression{Nodes::ExpressionType::literal, \
+    new Nodes::Type{\
+      const_cast<char*>("0literal"), \
+      new Nodes::DataType{Nodes::DTypeT::MEMBOX}, \
+      Registers::RegisterType::b32}, \
+    {.literal = {.lit = {Literal::LiteralType::integer, {.i = 8}}}}} \
+  }, \
+  Registers::RegisterType::b64, \
+  T}
+
+#define ARRAYOF(NAME, T) \
+new Nodes::Type{NAME, \
+  new Nodes::DataType{ \
+    Nodes::DTypeT::MEMBOX, \
+    new Nodes::Expression{Nodes::ExpressionType::literal, \
+    new Nodes::Type{\
+      const_cast<char*>("0literal"), \
+      new Nodes::DataType{Nodes::DTypeT::MEMBOX}, \
+      Registers::RegisterType::b32}, \
+    {.literal = {.lit = {Literal::LiteralType::integer, {.i = 8}}}}} \
+  }, \
+  Registers::RegisterType::b64, \
+  T}
+
 namespace Parser {
   class Parser {
     public:
@@ -23,6 +54,7 @@ namespace Parser {
       Lists::List<Nodes::Method*> getMethodsWithName(char* name);
       Nodes::Operation* operationOrError(char* identifier);
       Nodes::Cast* castOrError(Nodes::Type* from, Nodes::Type* to);
+      Nodes::Variable* getVariable(Nodes::Variable* var);
     private:
       Lists::List<Nodes::Method*> declaredMethods{[](Nodes::Method* a, Nodes::Method* b) {
         return *a == *b;
@@ -71,7 +103,7 @@ namespace Parser {
         if (peek()->type == type)
           return consume();
         Errors::error(error, peek()->line);
-        return {}; //! to get rid of warning
+        return {};
       }
   };
 }

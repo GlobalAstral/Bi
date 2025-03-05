@@ -1,5 +1,7 @@
 #include <Nodes.hpp>
 
+#define LITERAL_TYPE "0literal"
+
 std::string Nodes::DataType::toString() {
   std::stringstream ss;
   switch (this->type) {
@@ -114,7 +116,7 @@ bool Nodes::Expression::operator==(Expression a)  {
 }
 
 std::string Nodes::Type::toString() {
-  return std::string(name) + "(" + dt->toString() + ")";
+  return (this == NULL) ? "VOID" : std::string(name) + "(" + dt->toString() + ") which points to (" + pointsTo->toString() + ")";
 }
 
 bool Nodes::Type::operator==(Type a) {
@@ -237,7 +239,7 @@ Nodes::Type* Nodes::getLiteralType(Literal::Literal literal) {
       reg = Registers::RegisterType::simd;
     else
       reg = Registers::RegisterType::b64;
-  return new Nodes::Type{const_cast<char*>("0literal"), dt, reg};
+  return new Nodes::Type{const_cast<char*>(LITERAL_TYPE), dt, reg};
 }
 
 bool Nodes::Operation::operator==(Operation a) {

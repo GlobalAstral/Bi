@@ -211,6 +211,8 @@ Lists::List<Tokens::Token*> Tokens::Tokenizer::tokenize() {
           tokens.push(new Tokens::Token{Tokens::TokenType::FOR, line});
         } else if (buf == "return") {
           tokens.push(new Tokens::Token{Tokens::TokenType::RETURN, line});
+        } else if (buf == "void") {
+          tokens.push(new Tokens::Token{Tokens::TokenType::VOID, line});
         } else if (buf == "asm") {
           while (peek() == ' ' || peek() == '\n') 
             consume();

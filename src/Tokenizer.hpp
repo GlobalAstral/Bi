@@ -47,7 +47,8 @@ namespace Tokens {
     WHILE,
     DO,
     FOR,
-    RETURN
+    RETURN,
+    VOID
   };
 
   struct Token {

@@ -10,10 +10,10 @@
 namespace Nodes {
   enum class StatementType {
     method, scope, asm_code, var_decl, var_set, var_init, if_stmt, while_stmt, do_while_stmt, for_stmt, 
-    return_stmt, expr_stmt
+    return_stmt, expr_stmt, array_decl, array_set, array_init
   };
   enum class ExpressionType {
-    literal, identifier, label, method_call, cast, binary, dereference, reference
+    literal, identifier, label, method_call, cast, binary, dereference, reference, array_expr
   };
   enum class DTypeT {
     MEMBOX, LABEL, STRUCT, UNION, INVALID
@@ -74,6 +74,11 @@ namespace Nodes {
     Expression* expr;
   };
 
+  struct ArrayExpr {
+    Variable* var;
+    Expression* index;
+  };
+
   struct Expression {
     ExpressionType type;
     Type* retType;
@@ -86,6 +91,7 @@ namespace Nodes {
       CastExpr cast;
       Reference ref;
       Dereference deref;
+      ArrayExpr array;
     } u;
     bool operator==(Expression a);
     std::string toString();
@@ -103,6 +109,7 @@ namespace Nodes {
     char* name;
     DataType* dt;
     Registers::RegisterType regType;
+    Type* pointsTo;
     std::string toString();
     bool operator==(Type a);
   };
@@ -132,7 +139,7 @@ namespace Nodes {
       const char* reg;
       int offset;
     } location;
-
+    
     std::string toString();
     bool operator==(Variable a);
   };
@@ -197,6 +204,21 @@ namespace Nodes {
     Statement* setting;
   };
 
+  struct ArrayDeclaration {
+    Variable* var;
+    Expression* size;
+  };
+  struct ArraySetting {
+    Variable* var;
+    Expression* index;
+    Expression* value;
+  };
+
+  struct ArrayInitialization {
+    Statement* decl;
+    Lists::List<Expression*> entries;
+  };
+
   struct Statement {
     StatementType type;
     union {
@@ -211,6 +233,9 @@ namespace Nodes {
       ForStmt* for_stmt;
       ReturnStmt* return_stmt;
       ExprStmt* expr_stmt;
+      ArrayDeclaration* array_decl;
+      ArraySetting* array_set;
+      ArrayInitialization* array_init;
     } u;
     std::string toString();
   };
