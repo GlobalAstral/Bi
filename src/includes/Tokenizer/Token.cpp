@@ -29,6 +29,6 @@ std::string Tokens::Token::toString() {
   using std::string, std::stringstream;
   string typeAsString = getTypeAsString(this->type);
   
-  string ret = Formatting::format("%s(\"%s\") at line %d", typeAsString.c_str(), this->value.c_str(), this->line);
+  string ret = Formatting::format("%s(\"%s\")<%d>", typeAsString.c_str(), this->value.c_str(), this->line);
   return ret;
 }

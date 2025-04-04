@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
   vector<Tokens::Token> tokens = tokenizer.tokenize();
   
   for (Tokens::Token token : tokens) {
-    cout << token.toString() << endl;
+    cout << token.toString() << "  ";
   }
 
 	return 0;
