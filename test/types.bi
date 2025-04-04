@@ -1,0 +1,9 @@
+int -> 4
+float -> 4
+long -> 8
+double -> 8
+char -> 1
+byte -> 1
+string -> 8
+pointer -> 8
+array -> 8

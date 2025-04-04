@@ -4,7 +4,7 @@
       "name": "C/C++: mingw32-make build and debug active file",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}\\out\\Main.exe",
+      "program": "${workspaceFolder}\\out\\Bi.exe",
       "args": ["test\\prova.bi", "-asm"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
