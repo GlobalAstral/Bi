@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include <Utils/Constants.hpp>
+#include <Tokenizer/Tokenizer.hpp>
 
 using std::cout;
 using std::endl;
@@ -35,16 +36,23 @@ int main(int argc, char** argv) {
   string i_file = args.at(0);
   if (i_file.substr(i_file.size()-3) != EXTENSION)
     return 1;
-  string obj_file = i_file.erase(i_file.size()-2) + "obj";
-  string exe_file = (args.size() > 1) ? args.at(1) : i_file.erase(i_file.size()-2) + "exe";
+  string obj_file = string(i_file).erase(i_file.size()-2) + "obj";
+  string exe_file = (args.size() > 1) ? args.at(1) : string(i_file).erase(i_file.size()-2) + "exe";
 
   stringstream content;
   ifstream ifile{i_file};
   string buf;
   while (std::getline(ifile, buf)) {
-    content << buf;
+    content << buf << "\n";
   }
   ifile.close();
+
+  Tokenizer::Tokenizer tokenizer(content.str());
+  vector<Tokens::Token> tokens = tokenizer.tokenize();
+  
+  for (Tokens::Token token : tokens) {
+    cout << token.toString() << endl;
+  }
 
 	return 0;
 }

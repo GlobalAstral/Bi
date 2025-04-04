@@ -1,4 +1,4 @@
-#include "StringUtils.hpp"
+#include <Utils/StringUtils.hpp>
 
 bool StringUtils::isInString(char c, std::string s) {
   for (char ch : s) {

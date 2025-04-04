@@ -1,4 +1,4 @@
-#include "Tokenizer.hpp"
+#include <Tokenizer/Tokenizer.hpp>
 
 Tokenizer::Tokenizer::Tokenizer(std::string s) {
   this->content = std::string(s);
@@ -24,34 +24,63 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       } else if (tryconsume('*')) {
         multi_comment = true;
       } else {
-        tokens.push_back({Tokens::TokenType::slash, string(), line});
+        tokens.push_back({Tokens::TokenType::slash, line});
       }
     } else if (tryconsume('*')) {
       if (tryconsume('/')) {
         multi_comment = false;
       } else {
-        tokens.push_back({Tokens::TokenType::star, string(), line});
+        tokens.push_back({Tokens::TokenType::star, line});
       }
+
+    } else if (tryconsume('(')) {
+      tokens.push_back({Tokens::TokenType::open_paren, line});
+    } else if (tryconsume(')')) {
+      tokens.push_back({Tokens::TokenType::close_paren, line});
+    } else if (tryconsume('{')) {
+      tokens.push_back({Tokens::TokenType::open_curly, line});
+    } else if (tryconsume('}')) {
+      tokens.push_back({Tokens::TokenType::close_curly, line});
+    } else if (tryconsume(';')) {
+      tokens.push_back({Tokens::TokenType::semicolon, line});
     } else {
       stringstream buf;
       if (isalpha(peek())) {
         while (isalnum(peek()))
           buf << consume();
-        if (0) {
-
+        string buffer = string(buf.str());
+        if (buffer == "int") {
+          tokens.push_back({Tokens::TokenType::Int, line});
+        } else if (buffer == "float") {
+          tokens.push_back({Tokens::TokenType::Float, line});
+        } else if (buffer == "long") {
+          tokens.push_back({Tokens::TokenType::Long, line});
+        } else if (buffer == "double") {
+          tokens.push_back({Tokens::TokenType::Double, line});
+        } else if (buffer == "char") {
+          tokens.push_back({Tokens::TokenType::Char, line});
+        } else if (buffer == "byte") {
+          tokens.push_back({Tokens::TokenType::Byte, line});tokens.push_back({Tokens::TokenType::Int, line});
+        } else if (buffer == "string") {
+          tokens.push_back({Tokens::TokenType::String, line});
+        } else if (buffer == "void") {
+          tokens.push_back({Tokens::TokenType::Void, line});
         } else {
-          tokens.push_back({Tokens::TokenType::identifier, buf.str(), line});
+          tokens.push_back({Tokens::TokenType::identifier, line, buf.str()});
         }
+        buf.str("");
       } else if (isdigit(peek())) {
         while (isdigit(peek()) || peek() == '.')
           buf << consume();
         if (StringUtils::isInString(peek(), string(LITERAL_LONG)+LITERAL_FLOAT+LITERAL_DOUBLE+LITERAL_BINARY+LITERAL_OCTAL+LITERAL_HEX))
           buf << consume();
-        tokens.push_back({Tokens::TokenType::literal, buf.str(), line});
+        tokens.push_back({Tokens::TokenType::literal, line, buf.str()});
+        buf.str("");
       } else if (!isspace(peek())) {
         while (!isspace(peek()))
           buf << consume();
-        tokens.push_back({Tokens::TokenType::symbols, buf.str(), line});
+        tokens.push_back({Tokens::TokenType::symbols, line, buf.str()});
+        buf.str("");
       } else {
         Errors::error("Invalid Token", Formatting::format("Token '%s' not recognized", ("" + peek())), line);
       }

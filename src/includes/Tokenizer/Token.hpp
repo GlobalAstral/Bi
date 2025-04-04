@@ -1,16 +1,18 @@
 #pragma once
 #include <iostream>
+#include <Utils/Formatting.hpp>
 
 namespace Tokens {
   enum class TokenType {
-    star,       identifier,
-    slash,      literal,
-                symbols
+    star, slash, open_paren, close_paren, open_curly, close_curly, semicolon,
+    literal, symbols, identifier,
+    Int, Float, Long, Double, Char, Byte, String, Void,
   };
 
   struct Token {
     TokenType type;
-    std::string value;
     unsigned int line;
+    std::string value;
+    std::string toString();
   };
 }
