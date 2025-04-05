@@ -24,13 +24,13 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       } else if (tryconsume('*')) {
         multi_comment = true;
       } else {
-        tokens.push_back({Tokens::TokenType::slash, line});
+        tokens.push_back({Tokens::TokenType::symbols, line, "/"});
       }
     } else if (tryconsume('*')) {
       if (tryconsume('/')) {
         multi_comment = false;
       } else {
-        tokens.push_back({Tokens::TokenType::star, line});
+        tokens.push_back({Tokens::TokenType::symbols, line, "*"});
       }
 
     } else if (tryconsume('(')) {
@@ -43,6 +43,25 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       tokens.push_back({Tokens::TokenType::close_curly, line});
     } else if (tryconsume(';')) {
       tokens.push_back({Tokens::TokenType::semicolon, line});
+    } else if (tryconsume('\'')) {
+      char c = consume();
+      if (!tryconsume('\''))
+        Errors::error("Missing token", "Closing single quote expected", line);
+      tokens.push_back({Tokens::TokenType::literal, line, StringUtils::parseEscapes("'" + string(1, c) + "'")});
+    } else if (tryconsume('"')) {
+      stringstream ss;
+      ss << '"';
+      while (hasPeek() && !tryconsume('"')) {
+        if (peek() == '\\') {
+          ss << consume();
+        }
+        ss << consume();
+      }
+      if (!hasPeek())
+        Errors::error("Missing token", "Closing double quote expected", line);
+      ss << '"';
+      string s = StringUtils::parseEscapes(ss.str());
+      tokens.push_back({Tokens::TokenType::literal, line, s});
     } else {
       stringstream buf;
       if (isalpha(peek())) {
@@ -60,11 +79,13 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
         } else if (buffer == "char") {
           tokens.push_back({Tokens::TokenType::Char, line});
         } else if (buffer == "byte") {
-          tokens.push_back({Tokens::TokenType::Byte, line});tokens.push_back({Tokens::TokenType::Int, line});
+          tokens.push_back({Tokens::TokenType::Byte, line});
         } else if (buffer == "string") {
           tokens.push_back({Tokens::TokenType::String, line});
         } else if (buffer == "void") {
           tokens.push_back({Tokens::TokenType::Void, line});
+        } else if (buffer == "return") {
+          tokens.push_back({Tokens::TokenType::Return, line});
         } else {
           tokens.push_back({Tokens::TokenType::identifier, line, buf.str()});
         }
@@ -82,7 +103,7 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
         tokens.push_back({Tokens::TokenType::symbols, line, buf.str()});
         buf.str("");
       } else {
-        Errors::error("Invalid Token", Formatting::format("Token '%s' not recognized", ("" + peek())), line);
+        Errors::error("Invalid Token", Formatting::format("Token '%s' not recognized", string(1, peek())), line);
       }
     }
   }

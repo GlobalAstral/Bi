@@ -21,6 +21,7 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::Byte: return "BYTE";
     case Tokens::TokenType::String: return "STRING";
     case Tokens::TokenType::Void: return "VOID";
+    case Tokens::TokenType::Return: return "RETURN";
     default: return "NULL";
   }
 }

@@ -4,9 +4,10 @@
 
 namespace Tokens {
   enum class TokenType {
-    star, slash, open_paren, close_paren, open_curly, close_curly, semicolon,
+    open_paren, close_paren, open_curly, close_curly, semicolon,
     literal, symbols, identifier,
     Int, Float, Long, Double, Char, Byte, String, Void,
+    Return,
   };
 
   struct Token {
