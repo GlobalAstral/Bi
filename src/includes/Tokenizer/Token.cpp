@@ -3,8 +3,6 @@
 
 std::string getTypeAsString(Tokens::TokenType type) {
   switch (type) {
-    case Tokens::TokenType::star: return "STAR";
-    case Tokens::TokenType::slash: return "SLASH";
     case Tokens::TokenType::open_paren: return "OPEN_PAREN";
     case Tokens::TokenType::close_paren: return "CLOSE_PAREN";
     case Tokens::TokenType::open_curly: return "OPEN_CURLY";
