@@ -7,6 +7,10 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::close_paren: return "CLOSE_PAREN";
     case Tokens::TokenType::open_curly: return "OPEN_CURLY";
     case Tokens::TokenType::close_curly: return "CLOSE_CURLY";
+    case Tokens::TokenType::open_angle: return "OPEN_ANGLE";
+    case Tokens::TokenType::close_angle: return "CLOSE_ANGLE";
+    case Tokens::TokenType::open_square: return "OPEN_SQUARE";
+    case Tokens::TokenType::close_square: return "CLOSE_SQUARE";
     case Tokens::TokenType::semicolon: return "SEMICOLON";
     case Tokens::TokenType::literal: return "LITERAL";
     case Tokens::TokenType::symbols: return "SYMBOLS";
@@ -19,7 +23,25 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::Byte: return "BYTE";
     case Tokens::TokenType::String: return "STRING";
     case Tokens::TokenType::Void: return "VOID";
+    case Tokens::TokenType::Struct: return "STRUCT";
+    case Tokens::TokenType::Union: return "UNION";
+    case Tokens::TokenType::Interface: return "INTERFACE";
     case Tokens::TokenType::Return: return "RETURN";
+    case Tokens::TokenType::Mutable: return "MUTABLE";
+    case Tokens::TokenType::Unsigned: return "UNSIGNED";
+    case Tokens::TokenType::Operator: return "OPERATOR";
+    case Tokens::TokenType::Unary: return "UNARY";
+    case Tokens::TokenType::Binary: return "BINARY";
+    case Tokens::TokenType::Type: return "TYPE";
+    case Tokens::TokenType::Asm: return "ASM";
+    case Tokens::TokenType::If: return "IF";
+    case Tokens::TokenType::Else: return "ELSE";
+    case Tokens::TokenType::While: return "WHILE";
+    case Tokens::TokenType::Do: return "DO";
+    case Tokens::TokenType::For: return "FOR";
+    case Tokens::TokenType::Namespace: return "NAMESPACE";
+    case Tokens::TokenType::Defer: return "DEFER";
+    case Tokens::TokenType::preprocessor: return "PREPROCESSOR";
     default: return "NULL";
   }
 }

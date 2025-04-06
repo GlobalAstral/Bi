@@ -1,7 +1,8 @@
 #include <Utils/Errors.hpp>
 
 void Errors::error(std::string type, std::string error, int line) {
-  std::cout << RED << "ERROR" << ((line > 0) ? (" AT LINE " + line) : "") << ':' << type << " -> " << error << RESET << "\n";
+  std::string ln = ((line > 0) ? (" AT LINE " + std::to_string(line)) : "");
+  std::cout << RED << "ERROR" << ln << ": " << type << " -> " << error << RESET << "\n";
   exit(1);
 }
 
