@@ -42,6 +42,7 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::Namespace: return "NAMESPACE";
     case Tokens::TokenType::Defer: return "DEFER";
     case Tokens::TokenType::preprocessor: return "PREPROCESSOR";
+    case Tokens::TokenType::As: return "AS";
     default: return "NULL";
   }
 }

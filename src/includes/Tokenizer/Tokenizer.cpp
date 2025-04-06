@@ -130,6 +130,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::Namespace, line});
         } else if (buffer == "defer") {
           tokens.push_back({Tokens::TokenType::Defer, line});
+        } else if (buffer == "as") {
+          tokens.push_back({Tokens::TokenType::As, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};
