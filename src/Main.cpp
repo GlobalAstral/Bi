@@ -7,6 +7,7 @@
 
 #include <Utils/Constants.hpp>
 #include <Tokenizer/Tokenizer.hpp>
+#include <Parser/Parser.hpp>
 
 using std::cout;
 using std::endl;
@@ -53,6 +54,11 @@ int main(int argc, char** argv) {
   for (Tokens::Token token : tokens) {
     cout << token.toString() << endl;
   }
+
+  Parser::Parser parser{tokens};
+  vector<Nodes::Node> nodes = parser.parse();
+
+  
 
 	return 0;
 }

@@ -4,6 +4,7 @@
 
 namespace Tokens {
   enum class TokenType {
+    null = -1,
     open_paren, close_paren, open_curly, close_curly, open_angle, close_angle, open_square, close_square, semicolon, at,
     literal, symbols, identifier,
     Int, Float, Long, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
@@ -17,5 +18,7 @@ namespace Tokens {
     std::string value;
     std::string toString();
   };
+
+  Token nullToken();
 
 }

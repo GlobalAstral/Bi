@@ -7,7 +7,14 @@
 #define RESET "\033[0m"
 
 namespace Errors {
+
+  struct CompactError {
+    std::string error;
+    std::string msg;
+  };
+
   [[noreturn]] void error(std::string type, std::string error, int line = -1);
+  [[noreturn]] void error(CompactError error, int line = -1);
   void warn(std::string warning);
   void info(std::string i);
 }

@@ -51,6 +51,7 @@
     "charconv": "cpp",
     "ctime": "cpp",
     "span": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "list": "cpp"
   }
 }

@@ -1,4 +1,5 @@
 #include <Tokenizer/Token.hpp>
+#include "Token.hpp"
 
 
 std::string getTypeAsString(Tokens::TokenType type) {
@@ -53,4 +54,8 @@ std::string Tokens::Token::toString() {
   
   string ret = Formatting::format("%s(\"%s\")<%d>", typeAsString.c_str(), this->value.c_str(), this->line);
   return ret;
+}
+
+Tokens::Token Tokens::nullToken() {
+  return {Tokens::TokenType::null, 0, ""};
 }
