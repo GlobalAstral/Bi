@@ -55,6 +55,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       tokens.push_back({Tokens::TokenType::at, line});
     } else if (tryconsume('$')) {
       tokens.push_back({Tokens::TokenType::preprocessor, line});
+    } else if (tryconsume('.')) {
+      tokens.push_back({Tokens::TokenType::dot, line});
     } else if (tryconsume('\'')) {
       char c = consume();
       if (!tryconsume('\''))

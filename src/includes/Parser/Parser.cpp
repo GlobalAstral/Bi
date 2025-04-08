@@ -1,4 +1,5 @@
 #include <Parser/Parser.hpp>
+#include "Parser.hpp"
 
 Parser::Parser::Parser(std::vector<Tokens::Token> toks) {
   this->tokens = toks;
@@ -45,6 +46,8 @@ std::vector<Nodes::Node> Parser::Parser::parse() {
   return nodes;
 }
 
+
+
 void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
   if (tryconsume(Tokens::TokenType::Namespace)) {
     Tokens::Token namesp = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
@@ -56,8 +59,38 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     }
     if (notFound)
       error({"Missing Token", "Expected closing curly bracket"});
+    this->namespaces.pop_back();
   } else {
-    std::string s = peek().toString();
     error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
+}
+
+Tokens::Token Parser::Parser::getIdentNamespaces() {
+  using std::stringstream;
+  Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+  Tokens::Token ret = {};
+  memcpy(&ret, &ident, sizeof(Tokens::Token));
+  stringstream buf;
+  buf << ret.value;
+  while (tryconsume(Tokens::TokenType::dot)) {
+    ret = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected identifier after dot for namespace"});
+    buf << ":" << ret.value;
+  }
+  std::string temp = buf.str();
+  ret.value = temp;
+  return ret;
+}
+
+Tokens::Token Parser::Parser::applyNamespaces(Tokens::Token token) {
+  using std::stringstream, std::string;
+
+  stringstream ss;
+  for (int i = 0; i < namespaces.size(); i++)
+    ss << namespaces[i] << ":";
+  ss << token.value;
+  string temp = ss.str();
+  Tokens::Token ret = {};
+  memcpy(&ret, &token, sizeof(Tokens::Token));
+  ret.value = temp;
+  return ret;
 }

@@ -5,7 +5,7 @@
 namespace Tokens {
   enum class TokenType {
     null = -1,
-    open_paren, close_paren, open_curly, close_curly, open_angle, close_angle, open_square, close_square, semicolon, at,
+    open_paren, close_paren, open_curly, close_curly, open_angle, close_angle, open_square, close_square, semicolon, at, dot,
     literal, symbols, identifier,
     Int, Float, Long, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
     Return, Operator, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer,

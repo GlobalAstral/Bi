@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <vector>
-#include <list>
 
 #include <Tokenizer/Token.hpp>
 #include <Parser/Nodes.hpp>
@@ -16,6 +15,8 @@ namespace Parser {
       std::vector<Nodes::Node> parse();
     private:
       void parseSingle(std::vector<Nodes::Node>& nodes);
+      Tokens::Token getIdentNamespaces();
+      Tokens::Token applyNamespaces(Tokens::Token token);
 
       int _peek = 0;
       bool hasPeek(int offset = 0);
@@ -26,6 +27,6 @@ namespace Parser {
       [[noreturn]] void error(Errors::CompactError error);
 
       std::vector<Tokens::Token> tokens{};
-      std::list<std::string> namespaces{};
+      std::vector<std::string> namespaces{};
   };
 }
