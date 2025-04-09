@@ -8,6 +8,7 @@
 #include <Utils/Constants.hpp>
 #include <Tokenizer/Tokenizer.hpp>
 #include <Parser/Parser.hpp>
+#include <Tokenizer/Preprocessor.hpp>
 
 using std::cout;
 using std::endl;
@@ -51,6 +52,17 @@ int main(int argc, char** argv) {
   Tokenizer::Tokenizer tokenizer(content.str());
   vector<Tokens::Token> tokens = tokenizer.tokenize();
   
+  cout << endl << "TOKENS:" << endl;
+
+  for (Tokens::Token token : tokens) {
+    cout << token.toString() << endl;
+  }
+
+  Preprocessor::Preprocessor preprocessor{tokens};
+  tokens = preprocessor.preprocess();
+
+  cout << endl << "PREPROCESSED TOKENS:" << endl;
+
   for (Tokens::Token token : tokens) {
     cout << token.toString() << endl;
   }
@@ -58,7 +70,7 @@ int main(int argc, char** argv) {
   Parser::Parser parser{tokens};
   vector<Nodes::Node> nodes = parser.parse();
 
-  
+  cout << endl << "PARSED NODES:" << endl;
 
 	return 0;
 }

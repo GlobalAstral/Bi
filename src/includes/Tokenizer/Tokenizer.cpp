@@ -57,6 +57,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       tokens.push_back({Tokens::TokenType::preprocessor, line});
     } else if (tryconsume('.')) {
       tokens.push_back({Tokens::TokenType::dot, line});
+    } else if (tryconsume(',')) {
+      tokens.push_back({Tokens::TokenType::comma, line});
     } else if (tryconsume('\'')) {
       char c = consume();
       if (!tryconsume('\''))
@@ -134,6 +136,10 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::Defer, line});
         } else if (buffer == "as") {
           tokens.push_back({Tokens::TokenType::As, line});
+        } else if (buffer == "define") {
+          tokens.push_back({Tokens::TokenType::define, line});
+        } else if (buffer == "undefine") {
+          tokens.push_back({Tokens::TokenType::undefine, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};

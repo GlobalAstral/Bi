@@ -45,6 +45,9 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::preprocessor: return "PREPROCESSOR";
     case Tokens::TokenType::As: return "AS";
     case Tokens::TokenType::dot: return "DOT";
+    case Tokens::TokenType::comma: return "COMMA";
+    case Tokens::TokenType::define: return "DEFINE";
+    case Tokens::TokenType::undefine: return "UNDEFINE";
     default: return "NULL";
   }
 }
