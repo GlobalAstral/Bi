@@ -20,8 +20,9 @@ namespace Preprocessor {
       std::vector<Tokens::Token> preprocess();
     private:
       int preprocessIdentifier(Tokens::Token ident, std::vector<Tokens::Token>& out);
+      bool preprocessBoolean();
 
-      std::vector<Tokens::Token> tokens{};
+      std::vector<Tokens::Token> tokens;
       int _peek = 0;
       Map::Map<std::string, Definition> definitions{};
 

@@ -17,7 +17,7 @@ std::vector<Tokens::Token> Preprocessor::Preprocessor::preprocess() {
         std::vector<string> params;
         if (tryconsume(Tokens::TokenType::open_paren)) {
           bool notFound = true;
-          while (notFound = hasPeek()) {
+          while (hasPeek()) {
             Tokens::Token tok = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
             params.push_back(tok.value);
             if (tryconsume(Tokens::TokenType::close_paren)) {
@@ -116,6 +116,10 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
   }
   int end = _peek;
   return end - start;
+}
+
+bool Preprocessor::Preprocessor::preprocessBoolean() {
+  return false;
 }
 
 bool Preprocessor::Preprocessor::hasPeek(int offset) {
