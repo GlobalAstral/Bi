@@ -61,8 +61,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
       error({"Missing Token", "Expected closing curly bracket"});
     this->namespaces.pop_back();
   } else {
-    Tokens::Token temp = this->getIdentNamespaces();
-    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
+    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
 }
 
