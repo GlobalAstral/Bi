@@ -9,7 +9,7 @@ namespace Tokens {
     literal, symbols, identifier,
     Int, Float, Long, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
     Return, Operator, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer,
-    preprocessor, define, undefine
+    preprocessor, define, undefine, defined, endif, elseif
   };
 
   struct Token {

@@ -21,6 +21,7 @@ namespace Preprocessor {
     private:
       int preprocessIdentifier(Tokens::Token ident, std::vector<Tokens::Token>& out);
       bool preprocessBoolean();
+      void preprocessSingle(std::vector<Tokens::Token>& ret);
 
       std::vector<Tokens::Token> tokens;
       int _peek = 0;

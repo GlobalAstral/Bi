@@ -48,6 +48,9 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::comma: return "COMMA";
     case Tokens::TokenType::define: return "DEFINE";
     case Tokens::TokenType::undefine: return "UNDEFINE";
+    case Tokens::TokenType::defined: return "DEFINED";
+    case Tokens::TokenType::endif: return "ENDIF";
+    case Tokens::TokenType::elseif: return "ELSEIF";
     default: return "NULL";
   }
 }

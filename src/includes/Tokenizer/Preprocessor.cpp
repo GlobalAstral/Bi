@@ -10,50 +10,7 @@ std::vector<Tokens::Token> Preprocessor::Preprocessor::preprocess() {
   vector<Tokens::Token> ret{};
 
   while (hasPeek()) {
-    if (tryconsume(Tokens::TokenType::preprocessor)) {
-
-      if (tryconsume(Tokens::TokenType::define)) {
-        Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
-        std::vector<string> params;
-        if (tryconsume(Tokens::TokenType::open_paren)) {
-          bool notFound = true;
-          while (hasPeek()) {
-            Tokens::Token tok = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
-            params.push_back(tok.value);
-            if (tryconsume(Tokens::TokenType::close_paren)) {
-              notFound = false;
-              break;
-            }
-            tryconsume(Tokens::TokenType::comma, {"Missing Token", "Expected comma"});
-          }
-          if (notFound)
-            error({"Missing token", "Closing curly bracket expected"});
-        }
-        std::vector<Tokens::Token> content;
-        bool notFound = true;
-        while (hasPeek()) {
-          Tokens::Token tok = consume();
-          content.push_back(tok);
-          if (tryconsume(Tokens::TokenType::preprocessor)) {
-            notFound = false;
-            break;
-          }
-        }
-        if (notFound)
-          error({"Missing token", "Closing preprocessor expected"});
-        definitions[ident.value] = *(new Definition{params, content});
-      } else if (tryconsume(Tokens::TokenType::undefine)) {
-        Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
-        if (!definitions.contains(ident.value))
-          error({"Definition not found", Formatting::format("The definition %s does not exist", ident.value.c_str())});
-        definitions.remove(ident.value);
-      }
-
-    } else if (peek().type == Tokens::TokenType::identifier) {
-      preprocessIdentifier(consume(), ret);
-    } else {
-      ret.push_back(consume());
-    }
+    preprocessSingle(ret);
   }
 
   return ret;
@@ -119,7 +76,94 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
 }
 
 bool Preprocessor::Preprocessor::preprocessBoolean() {
-  return false;
+  bool inverted = peek().type == Tokens::TokenType::symbols && consume().value == "!";
+  bool flag = false;
+  if (tryconsume(Tokens::TokenType::defined)) {
+    Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+    flag = definitions.contains(ident.value);
+  }
+  return inverted ? !flag : flag;
+}
+
+void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& ret) {
+  using namespace std;
+  Tokens::Token temp = peek();
+  if (tryconsume(Tokens::TokenType::preprocessor)) {
+
+    if (tryconsume(Tokens::TokenType::define)) {
+      Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+      std::vector<string> params;
+      if (tryconsume(Tokens::TokenType::open_paren)) {
+        bool notFound = true;
+        while (hasPeek()) {
+          Tokens::Token tok = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+          params.push_back(tok.value);
+          if (tryconsume(Tokens::TokenType::close_paren)) {
+            notFound = false;
+            break;
+          }
+          tryconsume(Tokens::TokenType::comma, {"Missing Token", "Expected comma"});
+        }
+        if (notFound)
+          error({"Missing token", "Closing curly bracket expected"});
+      }
+      std::vector<Tokens::Token> content;
+      bool notFound = true;
+      while (hasPeek()) {
+        Tokens::Token tok = consume();
+        content.push_back(tok);
+        if (tryconsume(Tokens::TokenType::preprocessor)) {
+          notFound = false;
+          break;
+        }
+      }
+      if (notFound)
+        error({"Missing token", "Closing preprocessor expected"});
+      definitions[ident.value] = *(new Definition{params, content});
+    } else if (tryconsume(Tokens::TokenType::undefine)) {
+      Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+      if (!definitions.contains(ident.value))
+        error({"Definition not found", Formatting::format("The definition %s does not exist", ident.value.c_str())});
+      definitions.remove(ident.value);
+
+    } else if (tryconsume(Tokens::TokenType::If)) {
+      bool flag = preprocessBoolean();
+      
+      bool isElse = false;
+
+      while (hasPeek()) {
+        if (tryconsume(Tokens::TokenType::preprocessor)) {
+          if (tryconsume(Tokens::TokenType::endif)) {
+            break;
+          }
+          _peek--;
+        }
+        if (tryconsume(Tokens::TokenType::Else)) {
+          isElse = true;
+          continue;
+        }
+        if (tryconsume(Tokens::TokenType::elseif)) {
+          flag = !flag && preprocessBoolean();
+          continue;
+        }
+        if (!isElse && flag) {
+          preprocessSingle(ret);
+          continue;
+        }
+        if (isElse && !flag) {
+          preprocessSingle(ret);
+          continue;
+        }
+        consume();
+      }
+      
+    }
+
+  } else if (peek().type == Tokens::TokenType::identifier) {
+    preprocessIdentifier(consume(), ret);
+  } else {
+    ret.push_back(consume());
+  }
 }
 
 bool Preprocessor::Preprocessor::hasPeek(int offset) {

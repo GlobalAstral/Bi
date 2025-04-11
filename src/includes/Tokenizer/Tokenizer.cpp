@@ -140,6 +140,12 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::define, line});
         } else if (buffer == "undefine") {
           tokens.push_back({Tokens::TokenType::undefine, line});
+        } else if (buffer == "defined") {
+          tokens.push_back({Tokens::TokenType::defined, line});
+        } else if (buffer == "endif") {
+          tokens.push_back({Tokens::TokenType::endif, line});
+        } else if (buffer == "elseif") {
+          tokens.push_back({Tokens::TokenType::elseif, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};
