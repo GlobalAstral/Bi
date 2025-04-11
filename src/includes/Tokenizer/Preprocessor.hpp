@@ -30,6 +30,7 @@ namespace Preprocessor {
       bool hasPeek(int offset = 0);
       Tokens::Token peek(int offset = 0);
       Tokens::Token consume();
+      void consume(int amount);
       bool tryconsume(Tokens::TokenType type);
       Tokens::Token tryconsume(Tokens::TokenType type, Errors::CompactError error);
       [[noreturn]] void error(Errors::CompactError error);

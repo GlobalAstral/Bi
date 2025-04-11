@@ -121,6 +121,7 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
         error({"Missing token", "Closing preprocessor expected"});
       definitions[ident.value] = *(new Definition{params, content});
     } else if (tryconsume(Tokens::TokenType::undefine)) {
+
       Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
       if (!definitions.contains(ident.value))
         error({"Definition not found", Formatting::format("The definition %s does not exist", ident.value.c_str())});
@@ -132,11 +133,11 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
       bool isElse = false;
 
       while (hasPeek()) {
-        if (tryconsume(Tokens::TokenType::preprocessor)) {
-          if (tryconsume(Tokens::TokenType::endif)) {
+        if (peek().type == Tokens::TokenType::preprocessor) {
+          if (peek(1).type == Tokens::TokenType::endif) {
+            consume(2);
             break;
           }
-          _peek--;
         }
         if (tryconsume(Tokens::TokenType::Else)) {
           isElse = true;
@@ -146,11 +147,7 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
           flag = !flag && preprocessBoolean();
           continue;
         }
-        if (!isElse && flag) {
-          preprocessSingle(ret);
-          continue;
-        }
-        if (isElse && !flag) {
+        if ((!isElse && flag) || (isElse && !flag)) {
           preprocessSingle(ret);
           continue;
         }
@@ -176,6 +173,11 @@ Tokens::Token Preprocessor::Preprocessor::peek(int offset) {
 
 Tokens::Token Preprocessor::Preprocessor::consume() {
   return (hasPeek()) ? this->tokens[_peek++] : Tokens::nullToken();
+}
+
+void Preprocessor::Preprocessor::consume(int amount) {
+  for (int i = 0; i < amount; i++)
+    consume();
 }
 
 bool Preprocessor::Preprocessor::tryconsume(Tokens::TokenType type) {
