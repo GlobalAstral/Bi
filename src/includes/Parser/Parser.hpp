@@ -15,8 +15,8 @@ namespace Parser {
       std::vector<Nodes::Node> parse();
     private:
       void parseSingle(std::vector<Nodes::Node>& nodes);
-      Tokens::Token getIdentNamespaces();
-      Tokens::Token applyNamespaces(Tokens::Token token);
+      Tokens::Token& getIdentNamespaces();
+      Tokens::Token& applyNamespaces(Tokens::Token& token);
 
       int _peek = 0;
       bool hasPeek(int offset = 0);

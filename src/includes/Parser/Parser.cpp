@@ -40,7 +40,7 @@ std::vector<Nodes::Node> Parser::Parser::parse() {
   std::vector<Nodes::Node> nodes{};
 
   while (hasPeek()) {
-    parseSingle(nodes);    
+    parseSingle(nodes);
   }
 
   return nodes;
@@ -54,34 +54,35 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     tryconsume(Tokens::TokenType::open_curly, {"Missing Token", "Expected opening curly bracket"});
     this->namespaces.push_back(namesp.value);
     bool notFound = false;
-    while ((notFound = hasPeek() && !tryconsume(Tokens::TokenType::close_curly))) {
+    while (notFound = hasPeek() && !tryconsume(Tokens::TokenType::close_curly)) {
       parseSingle(nodes);
     }
     if (notFound)
       error({"Missing Token", "Expected closing curly bracket"});
     this->namespaces.pop_back();
   } else {
-    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
+    Tokens::Token temp = this->getIdentNamespaces();
+    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
 }
 
-Tokens::Token Parser::Parser::getIdentNamespaces() {
+Tokens::Token& Parser::Parser::getIdentNamespaces() {
   using std::stringstream;
   Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
-  Tokens::Token ret = {};
-  memcpy(&ret, &ident, sizeof(Tokens::Token));
+  Tokens::Token* ret = new Tokens::Token{};
+  *ret = ident;
   stringstream buf;
-  buf << ret.value;
+  buf << ret->value;
   while (tryconsume(Tokens::TokenType::dot)) {
-    ret = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected identifier after dot for namespace"});
-    buf << ":" << ret.value;
+    *ret = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected identifier after dot for namespace"});
+    buf << ":" << ret->value;
   }
   std::string temp = buf.str();
-  ret.value = temp;
-  return ret;
+  ret->value = temp;
+  return *ret;
 }
 
-Tokens::Token Parser::Parser::applyNamespaces(Tokens::Token token) {
+Tokens::Token& Parser::Parser::applyNamespaces(Tokens::Token& token) {
   using std::stringstream, std::string;
 
   stringstream ss;
@@ -89,8 +90,8 @@ Tokens::Token Parser::Parser::applyNamespaces(Tokens::Token token) {
     ss << namespaces[i] << ":";
   ss << token.value;
   string temp = ss.str();
-  Tokens::Token ret = {};
-  memcpy(&ret, &token, sizeof(Tokens::Token));
-  ret.value = temp;
-  return ret;
+  Tokens::Token* ret = new Tokens::Token{};
+  *ret = token;
+  ret->value = temp;
+  return *ret;
 }
