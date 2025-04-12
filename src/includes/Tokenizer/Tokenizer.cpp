@@ -148,6 +148,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::endif, line});
         } else if (buffer == "elseif") {
           tokens.push_back({Tokens::TokenType::elseif, line});
+        } else if (buffer == "include") {
+          tokens.push_back({Tokens::TokenType::include, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};

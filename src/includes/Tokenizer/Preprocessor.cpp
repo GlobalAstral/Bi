@@ -126,6 +126,7 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
       if (!definitions.contains(ident.value))
         error({"Definition not found", Formatting::format("The definition %s does not exist", ident.value.c_str())});
       definitions.remove(ident.value);
+      tryconsume({Tokens::TokenType::preprocessor}, {"Missing Token", "Expected closing preprocessor"});
 
     } else if (tryconsume({Tokens::TokenType::If})) {
       bool flag = preprocessBoolean();
@@ -154,10 +155,37 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
         consume();
       }
       
+    } else if (tryconsume({Tokens::TokenType::include})) {
+      using std::string, std::istream, std::stringstream;
+      Tokens::Token token = tryconsume({Tokens::TokenType::literal}, {"Missing Token", "Expected string literal"});
+      string filename = token.value;
+      if (filename[0] != '"' || filename[filename.size()-1] != '"')
+        error({"Invalid File", "Expected string literal for file name"});
+      filename.erase(0, 1);
+      filename.erase(filename.size()-1, 1);
+      if (!filesystem::is_regular_file(filename)) 
+        error({"Invalid File", Formatting::format("Cannot include file '%s'", token.value.c_str())});
+      
+      stringstream buf;
+      string temp;
+      
+      ifstream fstr{filename};
+      while (std::getline(fstr, temp))
+        buf << temp;
+      fstr.close();
+
+      Tokenizer::Tokenizer tokenizer{buf.str()};
+      vector<Tokens::Token> tokens = tokenizer.tokenize();
+      Preprocessor preprocessor{tokens};
+      tokens = preprocessor.preprocess();
+
+      for (auto token : tokens)
+        ret.push_back(token);
     }
 
   } else if (peek().type == Tokens::TokenType::identifier) {
     preprocessIdentifier(consume(), ret);
+
   } else {
     ret.push_back(consume());
   }

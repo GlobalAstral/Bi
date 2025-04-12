@@ -51,6 +51,7 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::defined: return "DEFINED";
     case Tokens::TokenType::endif: return "ENDIF";
     case Tokens::TokenType::elseif: return "ELSEIF";
+    case Tokens::TokenType::include: return "INCLUDE";
     default: return "NULL";
   }
 }
