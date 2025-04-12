@@ -1,7 +1,9 @@
 #include <Tokenizer/Tokenizer.hpp>
+#include "Tokenizer.hpp"
 
 Tokenizer::Tokenizer::Tokenizer(std::string s) {
-  this->content = std::string(s);
+  for (char c : s)
+    content.push_back(c);
 }
 
 std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
@@ -10,7 +12,7 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
   vector<Tokens::Token> tokens{};
   bool comment = false;
   bool multi_comment = false;
-  unsigned int line = 1;
+  
   while (hasPeek()) {
     if (comment || multi_comment || peek() == ' ' || peek() == '\r') {
       consume();
@@ -182,26 +184,14 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
   return tokens;
 }
 
-bool Tokenizer::Tokenizer::hasPeek(int offset) {
-  return this->_peek+offset >= 0 && this->_peek+offset < this->content.size();
-}
-
-char Tokenizer::Tokenizer::peek(int offset) {
-  if (hasPeek(offset))
-    return this->content[_peek+offset];
+char Tokenizer::Tokenizer::null() {
   return 0;
 }
 
-char Tokenizer::Tokenizer::consume() {
-  if (hasPeek())
-    return content[_peek++];
-  return 0;
+int Tokenizer::Tokenizer::getCurrentLine() {
+  return this->line;
 }
 
-bool Tokenizer::Tokenizer::tryconsume(char c) {
-  if (hasPeek() && peek() == c) {
-    consume();
-    return true;
-  }
-  return false;
+bool Tokenizer::Tokenizer::equalCriteria(char a, char b) {
+  return a == b;
 }

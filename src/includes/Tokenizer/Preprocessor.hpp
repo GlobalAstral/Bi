@@ -7,6 +7,8 @@
 #include <Utils/Map.hpp>
 #include <Utils/VectorUtils.hpp>
 
+#include <Utils/Processor.hpp>
+
 namespace Preprocessor {
 
   struct Definition {
@@ -14,7 +16,7 @@ namespace Preprocessor {
     std::vector<Tokens::Token> content;
   };
 
-  class Preprocessor {
+  class Preprocessor : public Processor::Processor<Tokens::Token> {
     public:
       Preprocessor(std::vector<Tokens::Token>& toks);
       std::vector<Tokens::Token> preprocess();
@@ -23,17 +25,10 @@ namespace Preprocessor {
       bool preprocessBoolean();
       void preprocessSingle(std::vector<Tokens::Token>& ret);
 
-      std::vector<Tokens::Token> tokens;
-      int _peek = 0;
-      Map::Map<std::string, Definition> definitions{};
+      Tokens::Token null();
+      int getCurrentLine();
+      bool equalCriteria(Tokens::Token a, Tokens::Token b);
 
-      bool hasPeek(int offset = 0);
-      Tokens::Token peek(int offset = 0);
-      Tokens::Token consume();
-      void consume(int amount);
-      bool tryconsume(Tokens::TokenType type);
-      Tokens::Token tryconsume(Tokens::TokenType type, Errors::CompactError error);
-      [[noreturn]] void error(Errors::CompactError error);
+      Map::Map<std::string, Definition> definitions{};
   };
 }
-

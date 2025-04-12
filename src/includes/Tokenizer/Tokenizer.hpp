@@ -7,18 +7,18 @@
 #include <Utils/Formatting.hpp>
 #include <Utils/StringUtils.hpp>
 #include <Utils/Constants.hpp>
+#include <Utils/Processor.hpp>
 
 namespace Tokenizer {
-  class Tokenizer {
+  class Tokenizer : public Processor::Processor<char> {
     public:
       Tokenizer(std::string s);
       std::vector<Tokens::Token> tokenize();
     private:
-      bool hasPeek(int offset = 0);
-      char peek(int offset = 0);
-      char consume();
-      bool tryconsume(char c);
-      std::string content;
-      int _peek = 0;
+      char null();
+      int getCurrentLine();
+      bool equalCriteria(char a, char b);
+
+      unsigned int line = 1;
   };
 }

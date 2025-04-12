@@ -2,7 +2,7 @@
 #include "Preprocessor.hpp"
 
 Preprocessor::Preprocessor::Preprocessor(std::vector<Tokens::Token>& toks) {
-  this->tokens = toks;
+  this->content = toks;
 }
 
 std::vector<Tokens::Token> Preprocessor::Preprocessor::preprocess() {
@@ -25,7 +25,7 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
   Definition def = definitions[ident.value];
   std::vector<std::vector<Tokens::Token>> params;
 
-  if (tryconsume(Tokens::TokenType::open_paren)) {
+  if (tryconsume({Tokens::TokenType::open_paren})) {
     bool notFound = true;
     while (hasPeek()) {
       std::vector<Tokens::Token> param;
@@ -33,11 +33,11 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
         param.push_back(consume());
       }
       params.push_back(param);
-      if (tryconsume(Tokens::TokenType::close_paren)) {
+      if (tryconsume({Tokens::TokenType::close_paren})) {
         notFound = false;
         break;
       }
-      tryconsume(Tokens::TokenType::comma, {"Missing Token", "Expected comma"});
+      tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Expected comma"});
     }
     if (notFound)
       error({"Missing token", "Closing curly bracket expected"});
@@ -60,16 +60,16 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
       }
       continue;
     }
-    std::vector<Tokens::Token> prev = tokens;
+    std::vector<Tokens::Token> prev = content;
     int prev_peek = _peek;
 
     _peek = 1;
-    tokens = def.content;
+    content = def.content;
 
     i = i + preprocessIdentifier(token, out);
 
     _peek = prev_peek;
-    tokens = prev;
+    content = prev;
   }
   int end = _peek;
   return end - start;
@@ -78,8 +78,8 @@ int Preprocessor::Preprocessor::preprocessIdentifier(Tokens::Token ident, std::v
 bool Preprocessor::Preprocessor::preprocessBoolean() {
   bool inverted = peek().type == Tokens::TokenType::symbols && consume().value == "!";
   bool flag = false;
-  if (tryconsume(Tokens::TokenType::defined)) {
-    Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+  if (tryconsume({Tokens::TokenType::defined})) {
+    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
     flag = definitions.contains(ident.value);
   }
   return inverted ? !flag : flag;
@@ -88,21 +88,21 @@ bool Preprocessor::Preprocessor::preprocessBoolean() {
 void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& ret) {
   using namespace std;
   Tokens::Token temp = peek();
-  if (tryconsume(Tokens::TokenType::preprocessor)) {
+  if (tryconsume({Tokens::TokenType::preprocessor})) {
 
-    if (tryconsume(Tokens::TokenType::define)) {
-      Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+    if (tryconsume({Tokens::TokenType::define})) {
+      Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
       std::vector<string> params;
-      if (tryconsume(Tokens::TokenType::open_paren)) {
+      if (tryconsume({Tokens::TokenType::open_paren})) {
         bool notFound = true;
         while (hasPeek()) {
-          Tokens::Token tok = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+          Tokens::Token tok = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
           params.push_back(tok.value);
-          if (tryconsume(Tokens::TokenType::close_paren)) {
+          if (tryconsume({Tokens::TokenType::close_paren})) {
             notFound = false;
             break;
           }
-          tryconsume(Tokens::TokenType::comma, {"Missing Token", "Expected comma"});
+          tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Expected comma"});
         }
         if (notFound)
           error({"Missing token", "Closing curly bracket expected"});
@@ -112,7 +112,7 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
       while (hasPeek()) {
         Tokens::Token tok = consume();
         content.push_back(tok);
-        if (tryconsume(Tokens::TokenType::preprocessor)) {
+        if (tryconsume({Tokens::TokenType::preprocessor})) {
           notFound = false;
           break;
         }
@@ -120,14 +120,14 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
       if (notFound)
         error({"Missing token", "Closing preprocessor expected"});
       definitions[ident.value] = *(new Definition{params, content});
-    } else if (tryconsume(Tokens::TokenType::undefine)) {
+    } else if (tryconsume({Tokens::TokenType::undefine})) {
 
-      Tokens::Token ident = tryconsume(Tokens::TokenType::identifier, {"Missing Token", "Expected Identifier"});
+      Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
       if (!definitions.contains(ident.value))
         error({"Definition not found", Formatting::format("The definition %s does not exist", ident.value.c_str())});
       definitions.remove(ident.value);
 
-    } else if (tryconsume(Tokens::TokenType::If)) {
+    } else if (tryconsume({Tokens::TokenType::If})) {
       bool flag = preprocessBoolean();
       
       bool isElse = false;
@@ -139,11 +139,11 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
             break;
           }
         }
-        if (tryconsume(Tokens::TokenType::Else)) {
+        if (tryconsume({Tokens::TokenType::Else})) {
           isElse = true;
           continue;
         }
-        if (tryconsume(Tokens::TokenType::elseif)) {
+        if (tryconsume({Tokens::TokenType::elseif})) {
           flag = !flag && preprocessBoolean();
           continue;
         }
@@ -163,37 +163,14 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
   }
 }
 
-bool Preprocessor::Preprocessor::hasPeek(int offset) {
-  return _peek+offset >= 0 && _peek+offset < this->tokens.size();
+Tokens::Token Preprocessor::Preprocessor::null() {
+  return Tokens::nullToken();
 }
 
-Tokens::Token Preprocessor::Preprocessor::peek(int offset) {
-  return (hasPeek(offset)) ? this->tokens[_peek+offset] : Tokens::nullToken();
+int Preprocessor::Preprocessor::getCurrentLine() {
+  return peek(-1).line;
 }
 
-Tokens::Token Preprocessor::Preprocessor::consume() {
-  return (hasPeek()) ? this->tokens[_peek++] : Tokens::nullToken();
-}
-
-void Preprocessor::Preprocessor::consume(int amount) {
-  for (int i = 0; i < amount; i++)
-    consume();
-}
-
-bool Preprocessor::Preprocessor::tryconsume(Tokens::TokenType type) {
-  if (peek().type == type) {
-    consume();
-    return true;
-  }
-  return false;
-}
-
-Tokens::Token Preprocessor::Preprocessor::tryconsume(Tokens::TokenType type, Errors::CompactError error) {
-  if (peek().type == type)
-    return consume();
-  this->error(error);
-}
-
-void Preprocessor::Preprocessor::error(Errors::CompactError error) {
-  Errors::error(error, peek(-1).line);
+bool Preprocessor::Preprocessor::equalCriteria(Tokens::Token a, Tokens::Token b) {
+  return a.type == b.type;
 }
