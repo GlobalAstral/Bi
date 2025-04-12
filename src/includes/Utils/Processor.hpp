@@ -16,34 +16,13 @@ namespace Processor {
       virtual int getCurrentLine() { error({"Internal Error", "Cannot call 'getCurrentLine' from Processor"}); return -1;}; //? dummy value, to satisfy compiler
       virtual bool equalCriteria(T a, T b) = 0;
 
-      bool hasPeek(int offset = 0) {
-        return _peek+offset >= 0 && _peek+offset < content.size();
-      }
-      T peek(int offset = 0) {
-        return (hasPeek(offset) ? this->content[_peek+offset] : null());
-      }
-      T consume() {
-        return (hasPeek() ? content[_peek++] : null());
-      }
-      void consume(int amount) {
-        for (int i = 0; i < amount; i++)
-          consume();
-      }
-      bool tryconsume(T c) {
-        if (equalCriteria(peek(), c)) {
-          consume();
-          return true;
-        }
-        return false;
-      }
-      T tryconsume(T c, Errors::CompactError error) {
-        if (equalCriteria(peek(), c))
-          return consume();
-        this->error(error);
-      }
-      [[noreturn]] void error(Errors::CompactError error) {
-        Errors::error(error, getCurrentLine());
-      }
+      bool hasPeek(int offset = 0) { return _peek+offset >= 0 && _peek+offset < content.size(); }
+      T peek(int offset = 0) { return (hasPeek(offset) ? this->content[_peek+offset] : null()); }
+      T consume() { return (hasPeek() ? content[_peek++] : null()); }
+      void consume(int amount) { for (int i = 0; i < amount; i++) {consume();} }
+      bool tryconsume(T c) { if (equalCriteria(peek(), c)) {consume();return true;} return false; }
+      T tryconsume(T c, Errors::CompactError error) { if (equalCriteria(peek(), c)) {return consume();} this->error(error); }
+      [[noreturn]] void error(Errors::CompactError error) { Errors::error(error, getCurrentLine()); }
   };
 }
 
