@@ -1,1 +1,4 @@
 
+type Franco int;
+
+Franco

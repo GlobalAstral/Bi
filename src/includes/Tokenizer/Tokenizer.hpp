@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <Tokenizer/Token.hpp>
-#include <format>
 #include <Utils/Errors.hpp>
 #include <Utils/Formatting.hpp>
 #include <Utils/StringUtils.hpp>
