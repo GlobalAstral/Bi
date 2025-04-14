@@ -7,8 +7,9 @@ namespace Tokens {
     null = -1,
     open_paren, close_paren, open_curly, close_curly, open_angle, close_angle, open_square, close_square, semicolon, at, dot, comma,
     literal, symbols, identifier,
+    ellipsis,
     Int, Float, Long, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
-    Return, Operator, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer,
+    Return, Operator, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer, Impl,
     preprocessor, define, undefine, defined, endif, elseif, include
   };
 

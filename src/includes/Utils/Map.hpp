@@ -27,6 +27,14 @@ namespace Map {
         this->values.erase(this->values.begin()+index);
         return 0;
       }
+      int size() {
+        return this->keys.size();
+      }
+      K getKey(int index) {
+        if (index < 0 || index >= size())
+          return {};
+        return this->keys[index];
+      }
     private:
       int find(K key) {
         for (int i = 0; i < keys.size(); i++) {

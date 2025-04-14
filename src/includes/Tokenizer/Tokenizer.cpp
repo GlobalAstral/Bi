@@ -58,7 +58,12 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
     } else if (tryconsume('$')) {
       tokens.push_back({Tokens::TokenType::preprocessor, line});
     } else if (tryconsume('.')) {
-      tokens.push_back({Tokens::TokenType::dot, line});
+      if (peek() == '.' && peek(1) == '.') {
+        tokens.push_back({Tokens::TokenType::ellipsis, line});
+        consume(2);
+      } else {
+        tokens.push_back({Tokens::TokenType::dot, line});
+      }
     } else if (tryconsume(',')) {
       tokens.push_back({Tokens::TokenType::comma, line});
     } else if (tryconsume('\'')) {
@@ -150,6 +155,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::elseif, line});
         } else if (buffer == "include") {
           tokens.push_back({Tokens::TokenType::include, line});
+        } else if (buffer == "impl") {
+          tokens.push_back({Tokens::TokenType::Impl, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};

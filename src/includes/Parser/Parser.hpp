@@ -8,7 +8,8 @@
 #include <Utils/Errors.hpp>
 #include <Utils/Formatting.hpp>
 #include <Utils/Processor.hpp>
-#include <Parser/Types.hpp>
+#include <Utils/Map.hpp>
+#include <Utils/VectorUtils.hpp>
 
 namespace Parser {
   class Parser : public Processor::Processor<Tokens::Token> {
@@ -20,13 +21,15 @@ namespace Parser {
       Tokens::Token& getIdentNamespaces();
       Tokens::Token& applyNamespaces(Tokens::Token& token);
 
-      Types::Type* parseType();
+      Nodes::Type* parseType();
+      Nodes::Method parseMethodSig();
 
       Tokens::Token null();
       int getCurrentLine();
       bool equalCriteria(Tokens::Token a, Tokens::Token b);
 
       std::vector<std::string> namespaces{};
-      Map::Map<std::string, Types::Type> declared_types{};
+      Map::Map<std::string, Nodes::Type> declared_types{};
+      std::vector<Nodes::Method> methods{};
   };
 }

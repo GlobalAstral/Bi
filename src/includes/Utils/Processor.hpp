@@ -24,6 +24,16 @@ namespace Processor {
       bool tryconsume(T c) { if (equalCriteria(peek(), c)) {consume();return true;} return false; }
       T tryconsume(T c, Errors::CompactError error) { if (equalCriteria(peek(), c)) {return consume();} this->error(error); }
       [[noreturn]] void error(Errors::CompactError error) { Errors::error(error, getCurrentLine()); }
-      bool doUntilFind(T toFind, std::function<void()> func) { bool found = false;while (hasPeek()) {if (tryconsume(toFind)) {found = true; break;} func();} return found; };
+      bool doUntilFind(T toFind, std::function<void()> func) {
+        bool found = false;
+        while (hasPeek()) {
+          if (tryconsume(toFind)) {
+            found = true; 
+            break;
+          }
+          func();
+        } 
+        return found; 
+      };
   };
 }

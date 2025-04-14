@@ -1,4 +1,4 @@
 
-type Franco int;
-
-Franco
+namespace Abdul {
+  void abdul;
+}
