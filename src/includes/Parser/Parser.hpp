@@ -10,6 +10,7 @@
 #include <Utils/Processor.hpp>
 #include <Utils/Map.hpp>
 #include <Utils/VectorUtils.hpp>
+#include <Parser/Literal.hpp>
 
 namespace Parser {
   class Parser : public Processor::Processor<Tokens::Token> {

@@ -176,7 +176,7 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       } else if (isdigit(peek())) {
         while (isdigit(peek()) || peek() == '.')
           buf << consume();
-        if (StringUtils::isInString(peek(), string(LITERAL_LONG)+LITERAL_FLOAT+LITERAL_DOUBLE+LITERAL_BINARY+LITERAL_OCTAL+LITERAL_HEX))
+        if (StringUtils::isInString(peek(), Constants::LITERAL_PREFIXES))
           buf << consume();
         tokens.push_back({Tokens::TokenType::literal, line, buf.str()});
         buf.str("");

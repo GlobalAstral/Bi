@@ -53,8 +53,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
   }
   
   else {
-    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
-    parseMethodSig();
+    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
 }
 
@@ -150,9 +149,12 @@ Nodes::Type* Parser::Parser::parseType() {
       }
     });
     if (!found)
-      error({"Missing Token", "Expected closing curly bracket1"});
+      error({"Missing Token", "Expected closing curly bracket"});
 
-  } else if (tryconsume({Tokens::TokenType::Union})) {
+  } 
+  
+  
+  else if (tryconsume({Tokens::TokenType::Union})) {
     t->type = Nodes::Type::Builtins::Union;
     
     tryconsume({Tokens::TokenType::open_curly}, {"Missing Token", "Expected opening curly bracket after union"});

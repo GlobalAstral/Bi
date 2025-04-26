@@ -27,7 +27,7 @@ namespace Nodes {
   enum class NodeType {
     pass, scope, method_decl, 
   };
-  
+
   struct Scope {
     std::vector<Node> nodes;
   };
@@ -53,4 +53,24 @@ namespace Nodes {
       Method* method_decl;
     } u;
   };
+
+  struct Expression {
+    enum class ExprType {
+      custom,
+      literal,
+      variable,
+      function_call,
+      reference,
+      dereference,
+      subscript,
+      dot_notation
+    } type;
+
+    union {
+
+    } u;
+
+    //TODO All types of expression
+  };
+  
 }

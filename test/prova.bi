@@ -1,4 +1,1 @@
-
-namespace Abdul {
-  void abdul;
-}
+Franco

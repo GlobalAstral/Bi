@@ -1,10 +1,16 @@
 #pragma once
 
-#define EXTENSION ".bi"
-#define LITERAL_LONG "L"
-#define LITERAL_FLOAT "f"
-#define LITERAL_DOUBLE "d"
-#define LITERAL_BINARY "b"
-#define LITERAL_OCTAL "o"
-#define LITERAL_HEX "h"
+#include <Utils/Formatting.hpp>
 
+#define EXTENSION ".bi"
+
+namespace Constants {
+  const char LITERAL_LONG = 'L';
+  const char LITERAL_FLOAT = 'f';
+  const char LITERAL_DOUBLE = 'D';
+  const char LITERAL_BINARY = 'b';
+  const char LITERAL_OCTAL = 'o';
+  const char LITERAL_HEX = 'H';
+
+  const std::string LITERAL_PREFIXES = Formatting::format("%c%c%c%c%c%c", LITERAL_LONG, LITERAL_FLOAT, LITERAL_DOUBLE, LITERAL_BINARY, LITERAL_OCTAL, LITERAL_HEX);
+}

@@ -15,6 +15,8 @@ std::string Formatting::format(std::string format_, ...) {
         ss << va_arg(args, int);
       } else if (*f == 's') {
         ss << va_arg(args, char*);
+      } else if (*f == 'c') {
+        ss << (char) va_arg(args, int);
       }
     } else {
       ss << *f;

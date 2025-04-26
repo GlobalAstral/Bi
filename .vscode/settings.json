@@ -53,6 +53,16 @@
     "span": "cpp",
     "variant": "cpp",
     "list": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "codecvt": "cpp",
+    "map": "cpp",
+    "ratio": "cpp",
+    "iomanip": "cpp"
+  },
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
   }
 }
