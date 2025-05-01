@@ -307,9 +307,6 @@ Tokens::Token& Parser::Parser::applyNamespaces(Tokens::Token& token) {
 
 Nodes::Type* Parser::Parser::parseType() {
   Nodes::Type* t = new Nodes::Type{};
-  t->mut = false;
-  if (tryconsume({Tokens::TokenType::Unsigned}))
-    t->Unsigned = true;
   if (tryconsume({.type=Tokens::TokenType::symbols, .value="*"})) {
     Nodes::Type* temp = parseType();
     *t = {Nodes::Type::Builtins::Pointer, temp};
@@ -431,7 +428,6 @@ Nodes::Type* Parser::Parser::parseType() {
 Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
   Nodes::Type* ret = (Nodes::Type*)malloc(sizeof(Nodes::Type));
   ret->mut = false;
-  ret->Unsigned = false;
 
   switch (lit.type) {
     case Literals::LiteralType::INT :

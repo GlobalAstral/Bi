@@ -25,8 +25,6 @@ bool Nodes::Type::operator==(const Type other) const {
     return false;
   if (this->mut != other.mut)
     return false;
-  if (this->Unsigned != other.Unsigned)
-    return false;
   if (this->pointsTo != NULL && other.pointsTo != NULL && *(this->pointsTo) != *(other.pointsTo))
     return false;
   if (this->implementing.size() != other.implementing.size())

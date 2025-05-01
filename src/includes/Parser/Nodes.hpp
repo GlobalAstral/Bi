@@ -23,7 +23,6 @@ namespace Nodes {
     std::vector<Variable> interior;
     std::vector<Nodes::Method> methods;
     std::vector<Type*> implementing;
-    bool Unsigned;
     Expression* size;
 
     bool operator==(const Type other) const;
