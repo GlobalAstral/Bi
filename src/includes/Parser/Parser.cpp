@@ -318,10 +318,14 @@ Nodes::Type* Parser::Parser::parseType() {
     t->size = &ex;
   } else if (tryconsume({Tokens::TokenType::Int})) {
     *t = {Nodes::Type::Builtins::Int};
+  } else if (tryconsume({Tokens::TokenType::Uint})) {
+    *t = {Nodes::Type::Builtins::Uint};
   } else if (tryconsume({Tokens::TokenType::Float})) {
     *t = {Nodes::Type::Builtins::Float};
   } else if (tryconsume({Tokens::TokenType::Long})) {
     *t = {Nodes::Type::Builtins::Long};
+  } else if (tryconsume({Tokens::TokenType::Ulong})) {
+    *t = {Nodes::Type::Builtins::Ulong};
   } else if (tryconsume({Tokens::TokenType::Double})) {
     *t = {Nodes::Type::Builtins::Double};
   } else if (tryconsume({Tokens::TokenType::Char})) {

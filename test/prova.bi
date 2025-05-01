@@ -1,2 +1,2 @@
-
-
+binary + : <uint a, uint b, uint, 1>
+  ...

@@ -17,8 +17,10 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::symbols: return "SYMBOLS";
     case Tokens::TokenType::identifier: return "IDENTIFIER";
     case Tokens::TokenType::Int: return "INT";
+    case Tokens::TokenType::Uint: return "UINT";
     case Tokens::TokenType::Float: return "FLOAT";
     case Tokens::TokenType::Long: return "LONG";
+    case Tokens::TokenType::Ulong: return "ULONG";
     case Tokens::TokenType::Double: return "DOUBLE";
     case Tokens::TokenType::Char: return "CHAR";
     case Tokens::TokenType::Byte: return "BYTE";

@@ -98,10 +98,14 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
         string buffer = string(buf.str());
         if (buffer == "int") {
           tokens.push_back({Tokens::TokenType::Int, line});
+        } else if (buffer == "uint") {
+          tokens.push_back({Tokens::TokenType::Uint, line});
         } else if (buffer == "float") {
           tokens.push_back({Tokens::TokenType::Float, line});
         } else if (buffer == "long") {
           tokens.push_back({Tokens::TokenType::Long, line});
+        } else if (buffer == "ulong") {
+          tokens.push_back({Tokens::TokenType::Ulong, line});
         } else if (buffer == "double") {
           tokens.push_back({Tokens::TokenType::Double, line});
         } else if (buffer == "char") {

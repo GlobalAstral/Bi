@@ -15,7 +15,7 @@ namespace Nodes {
 
   struct Type {
     enum class Builtins {
-      Int, Float, Long, Double, Char, Byte, String, Pointer, Array, Struct, Union, Interface, Void, Custom
+      Int, Uint, Float, Ulong, Long, Double, Char, Byte, String, Pointer, Array, Struct, Union, Interface, Void, Custom
     } type;
     Type* pointsTo;
     bool mut;
