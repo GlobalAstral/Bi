@@ -76,4 +76,5 @@ bool Literals::Literal::operator==(Literal a) {
     case LiteralType::STRING :
       return strcmp(this->u.s, a.u.s) == 0;
   }
+  return false;
 }

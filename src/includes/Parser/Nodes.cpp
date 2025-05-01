@@ -1,7 +1,7 @@
 #include <Parser/Nodes.hpp>
 #include "Nodes.hpp"
 
-bool Nodes::Method::operator==(Method other) {
+bool Nodes::Method::operator==(const Method other) const {
   if (strcmp(this->name, other.name) != 0)
     return false;
   if (*(this->returnType) != *(other.returnType))
@@ -15,10 +15,10 @@ bool Nodes::Method::operator==(Method other) {
   return true;
 }
 
-bool Nodes::Method::operator!=(Method other) {
+bool Nodes::Method::operator!=(const Method other) const {
   return !(*this == other);
 }
-bool Nodes::Type::operator==(Type other) {
+bool Nodes::Type::operator==(const Type other) const {
   if (this->type != other.type)
     return false;
   if (this->alias != NULL && other.alias != NULL && strcmp(this->alias, other.alias) != 0)
@@ -53,22 +53,22 @@ bool Nodes::Type::operator==(Type other) {
   return true;
 }
 
-bool Nodes::Type::operator!=(Type other) {
+bool Nodes::Type::operator!=(const Type other) const {
   return !(*this == other);
 }
 
-bool Nodes::Variable::operator==(Variable a) {
+bool Nodes::Variable::operator==(const Variable a) const {
   return strcmp(this->name, a.name) == 0;
 }
 
-bool Nodes::Variable::operator!=(Variable a) {
+bool Nodes::Variable::operator!=(const Variable a) const {
   return !(*this == a);
 }
 
-bool Nodes::Expression::operator==(Expression a) {
+bool Nodes::Expression::operator==(const Expression a) const {
   if (this->type != a.type)
     return false;
-  if (this->returnType != a.returnType)
+  if (*(this->returnType) != *(a.returnType))
     return false;
   
   switch (this->type) {
@@ -107,13 +107,14 @@ bool Nodes::Expression::operator==(Expression a) {
         return false;
       return this->u.custom->op == a.u.custom->op;
   }
+  return false;
 }
 
-bool Nodes::Expression::operator!=(Expression a) {
+bool Nodes::Expression::operator!=(const Expression a) const {
   return !(*this == a);
 }
 
-bool Nodes::Operation::operator==(Operation a) {
+bool Nodes::Operation::operator==(const Operation a) const {
   if (this->a != a.a)
     return false;
   if (this->b != a.b)
@@ -129,6 +130,6 @@ bool Nodes::Operation::operator==(Operation a) {
   return true;
 }
 
-bool Nodes::Operation::operator!=(Operation a) {
+bool Nodes::Operation::operator!=(const Operation a) const {
   return !(*this == a);
 }

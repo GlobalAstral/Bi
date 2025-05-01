@@ -26,8 +26,8 @@ namespace Nodes {
     bool Unsigned;
     Expression* size;
 
-    bool operator==(Type other);
-    bool operator!=(Type other);
+    bool operator==(const Type other) const;
+    bool operator!=(const Type other) const;
   };
 
   enum class NodeType {
@@ -41,8 +41,8 @@ namespace Nodes {
   struct Variable {
     char* name;
     Nodes::Type* type;
-    bool operator==(Variable a);
-    bool operator!=(Variable a);
+    bool operator==(const Variable a) const;
+    bool operator!=(const Variable a) const;
   };
 
   struct Method {
@@ -50,8 +50,8 @@ namespace Nodes {
     char* name;
     std::vector<Variable> params;
     std::vector<Node> content;
-    bool operator==(Method other);
-    bool operator!=(Method other);
+    bool operator==(const Method other) const;
+    bool operator!=(const Method other) const;
   };
 
   struct Operation {
@@ -66,8 +66,8 @@ namespace Nodes {
     int precedence;
     std::vector<Node>* stmt;
 
-    bool operator==(Operation a);
-    bool operator!=(Operation a);
+    bool operator==(const Operation a) const;
+    bool operator!=(const Operation a) const;
   };
 
   struct Node {
@@ -123,7 +123,7 @@ namespace Nodes {
       CustomExpr* custom;
     } u;
 
-    bool operator==(Expression a);
-    bool operator !=(Expression a);
+    bool operator==(const Expression a) const;
+    bool operator !=(const Expression a) const;
   };
 }
