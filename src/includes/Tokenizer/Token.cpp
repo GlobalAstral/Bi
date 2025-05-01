@@ -30,7 +30,6 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::Return: return "RETURN";
     case Tokens::TokenType::Mutable: return "MUTABLE";
     case Tokens::TokenType::Unsigned: return "UNSIGNED";
-    case Tokens::TokenType::Operator: return "OPERATOR";
     case Tokens::TokenType::Unary: return "UNARY";
     case Tokens::TokenType::Binary: return "BINARY";
     case Tokens::TokenType::Type: return "TYPE";
@@ -54,6 +53,8 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::include: return "INCLUDE";
     case Tokens::TokenType::Impl: return "IMPL";
     case Tokens::TokenType::ellipsis: return "ELLIPSIS";
+    case Tokens::TokenType::arrow: return "ARROW";
+    case Tokens::TokenType::colon: return "COLON";
     default: return "NULL";
   }
 }

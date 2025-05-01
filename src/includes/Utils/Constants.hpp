@@ -13,4 +13,5 @@ namespace Constants {
   const char LITERAL_HEX = 'H';
 
   const std::string LITERAL_PREFIXES = Formatting::format("%c%c%c%c%c%c", LITERAL_LONG, LITERAL_FLOAT, LITERAL_DOUBLE, LITERAL_BINARY, LITERAL_OCTAL, LITERAL_HEX);
+  const std::string NON_SYMBOLS_TOKEN_CHARS = "()[]{}<>;@$:,\"'";
 }

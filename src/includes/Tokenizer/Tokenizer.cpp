@@ -57,6 +57,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       tokens.push_back({Tokens::TokenType::at, line});
     } else if (tryconsume('$')) {
       tokens.push_back({Tokens::TokenType::preprocessor, line});
+    } else if (tryconsume(':')) {
+      tokens.push_back({Tokens::TokenType::colon, line});
     } else if (tryconsume('.')) {
       if (peek() == '.' && peek(1) == '.') {
         tokens.push_back({Tokens::TokenType::ellipsis, line});
@@ -66,6 +68,9 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
       }
     } else if (tryconsume(',')) {
       tokens.push_back({Tokens::TokenType::comma, line});
+    } else if (peek() == '-' && peek(1) == '>') {
+      tokens.push_back({Tokens::TokenType::arrow, line});
+      consume(2);
     } else if (tryconsume('\'')) {
       char c = consume();
       if (!tryconsume('\''))
@@ -119,8 +124,6 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::Mutable, line});
         } else if (buffer == "unsigned") {
           tokens.push_back({Tokens::TokenType::Unsigned, line});
-        } else if (buffer == "operator") {
-          tokens.push_back({Tokens::TokenType::Operator, line});
         } else if (buffer == "unary") {
           tokens.push_back({Tokens::TokenType::Unary, line});
         } else if (buffer == "binary") {
@@ -181,7 +184,7 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
         tokens.push_back({Tokens::TokenType::literal, line, buf.str()});
         buf.str("");
       } else if (!isspace(peek())) {
-        while (!isalnum(peek()) && !isspace(peek()))
+        while (!isalnum(peek()) && !isspace(peek()) && !StringUtils::isInString(peek(), Constants::NON_SYMBOLS_TOKEN_CHARS))
           buf << consume();
         tokens.push_back({Tokens::TokenType::symbols, line, buf.str()});
         buf.str("");

@@ -35,5 +35,22 @@ namespace Processor {
         } 
         return found; 
       };
+
+      bool doUntilFind(T toFind, std::function<void()> func, T sep, Errors::CompactError error) {
+        bool found = false;
+        while (hasPeek()) {
+          if (tryconsume(toFind)) {
+            found = true; 
+            break;
+          }
+          func();
+          if (tryconsume(toFind)) {
+            found = true; 
+            break;
+          }
+          tryconsume(sep, error);
+        } 
+        return found; 
+      };
   };
 }

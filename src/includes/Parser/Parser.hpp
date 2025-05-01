@@ -10,7 +10,7 @@
 #include <Utils/Processor.hpp>
 #include <Utils/Map.hpp>
 #include <Utils/VectorUtils.hpp>
-#include <Parser/Literal.hpp>
+#include <string.h>
 
 namespace Parser {
   class Parser : public Processor::Processor<Tokens::Token> {
@@ -19,11 +19,14 @@ namespace Parser {
       std::vector<Nodes::Node> parse();
     private:
       void parseSingle(std::vector<Nodes::Node>& nodes);
+      Nodes::Expression& parseExpr(bool paren = false);
       Tokens::Token& getIdentNamespaces();
       Tokens::Token& applyNamespaces(Tokens::Token& token);
 
       Nodes::Type* parseType();
+      Nodes::Type* convertFromLiteral(Literals::Literal lit);
       Nodes::Method parseMethodSig();
+      bool isType();
 
       Tokens::Token null();
       int getCurrentLine();
@@ -32,5 +35,7 @@ namespace Parser {
       std::vector<std::string> namespaces{};
       Map::Map<std::string, Nodes::Type> declared_types{};
       std::vector<Nodes::Method> methods{};
+      std::vector<Nodes::Variable> variables{};
+      std::vector<Nodes::Operation> operations{};
   };
 }

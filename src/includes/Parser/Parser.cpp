@@ -1,5 +1,4 @@
 #include <Parser/Parser.hpp>
-#include "Parser.hpp"
 
 Parser::Parser::Parser(std::vector<Tokens::Token> toks) {
   this->content = toks;
@@ -50,11 +49,232 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     nodes.push_back({Nodes::NodeType::scope, {.scope = new Nodes::Scope{scope}}});
   } else if (tryconsume({Tokens::TokenType::ellipsis})) {
     nodes.push_back({Nodes::NodeType::pass});
+  } else if (peek().type == Tokens::TokenType::Unary || peek().type == Tokens::TokenType::Binary) {
+    Nodes::Operation op;
+    if (tryconsume({Tokens::TokenType::Unary}))
+      op.type = Nodes::Operation::OpType::unary;
+    else if (tryconsume({Tokens::TokenType::Binary}))
+      op.type = Nodes::Operation::OpType::binary;
+
+    Tokens::Token symbols = tryconsume({Tokens::TokenType::symbols}, {"Missing Token", "Expected symbols for operator"});
+    tryconsume({Tokens::TokenType::colon}, {"Missing Token", "Expected colon"});
+    tryconsume({Tokens::TokenType::open_angle}, {"Missing Token", "Expected opening angle bracket"});
+    char* syms = (char*)malloc(symbols.value.size()*sizeof(char));
+    strcpy(syms, symbols.value.c_str());
+    op.symbols = syms;
+
+    Nodes::Type* a_type = parseType();
+    Tokens::Token a_ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    char* a_name = (char*)malloc(a_ident.value.size()*sizeof(char));
+    strcpy(a_name, a_ident.value.c_str());
+    op.a = {a_name, a_type};
+    if (op.type == Nodes::Operation::OpType::binary) {
+      tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Missing second variable for binary operation"});
+      Nodes::Type* b_type = parseType();
+      Tokens::Token b_ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+      char* b_name = (char*)malloc(b_ident.value.size()*sizeof(char));
+      strcpy(b_name, b_ident.value.c_str());
+      op.b = {b_name, b_type};
+    }
+    tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Missing comma for operation parameters"});
+    op.returnType = parseType();
+    tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Missing comma for operation parameters"});
+    Nodes::Expression expr = parseExpr();
+    if (expr.type != Nodes::Expression::ExprType::literal || expr.u.lit->type != Literals::LiteralType::INT)
+      error({"Internal Error", "Operation Precedence must be a literal integer"});
+    op.precedence = expr.u.lit->u.i;
+    tryconsume({Tokens::TokenType::close_angle}, {"Missing Token", "Expected closing angle bracket"});
+    std::vector<Nodes::Node>* o = new std::vector<Nodes::Node>{};
+    parseSingle(*o);
+    op.stmt = o;
+
+    operations.push_back(op);
+  } else if (isType()) {
+    int begin = _peek;
+    Nodes::Type* type = parseType();
+    tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    if (!tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
+      _peek = begin;
+      Nodes::Method* mtd = new Nodes::Method{};
+      *mtd = parseMethodSig();
+      this->methods.push_back(*mtd);
+      nodes.push_back({Nodes::NodeType::method_decl, {.method_decl = mtd}});
+    } else {
+      //TODO VARIABLES
+    }
+  } else {
+    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
+    Nodes::Expression expr = parseExpr();
   }
+}
+
+Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
+  if (tryconsume({Tokens::TokenType::open_paren}))
+    return parseExpr(true);
+  Nodes::Expression* expr = (Nodes::Expression*)malloc(sizeof(Nodes::Expression));
+
+  if (peek().type == Tokens::TokenType::literal) {
+    expr->type = Nodes::Expression::ExprType::literal;
+    Literals::Literal& lit = Literals::parseLiteral(consume().value);
+    expr->u.lit = &lit;
+    expr->returnType = convertFromLiteral(lit);
+  } else if (peek().type == Tokens::TokenType::identifier) {
+    Tokens::Token ident = getIdentNamespaces();
+
+    if (tryconsume({Tokens::TokenType::open_paren})) {
+      expr->type = Nodes::Expression::ExprType::function_call;
+      Nodes::Method mtd;
+      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+      strcpy(buf, ident.value.c_str());
+      mtd.name = buf;
+      std::vector<Nodes::Expression> param_values;
+
+      doUntilFind({Tokens::TokenType::close_paren}, [this, &param_values, &mtd](){
+        Nodes::Expression e = parseExpr();
+        e.returnType->mut = false;
+        param_values.push_back(e);
+        mtd.params.push_back({.type = e.returnType});
+      }, {Tokens::TokenType::comma}, {"Missing Token", "Missing comma between parameters"});
+
+      tryconsume({Tokens::TokenType::arrow}, {"Missing Token", "Expected return type specififier"});
+      mtd.returnType = parseType();
+
+      int index = VectorUtils::find<Nodes::Method>(this->methods, mtd);
+      if (index < 0)
+        error({"Method not Found", Formatting::format("Method '%s' does not exist", ident.value.c_str())});
+
+      Nodes::Method* method = &methods[index];
+      expr->returnType = method->returnType;
+      expr->u.method_call = new Nodes::MethodCall{method, param_values};
+    } else if (tryconsume({Tokens::TokenType::open_square})) {
+      expr->type = Nodes::Expression::ExprType::subscript;
+      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+      strcpy(buf, ident.value.c_str());
+      int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
+      if (index < 0)
+        error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+      Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+      *var = variables.at(index);
+      Nodes::Expression& e = parseExpr();
+      expr->returnType = var->type->pointsTo;
+      expr->u.subscript = new Nodes::SubscriptExpr{*var, &e};
+      tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
+    } else if (peek().type == Tokens::TokenType::dot) {
+      // variables.push_back({"prova", new Nodes::Type{Nodes::Type::Builtins::Struct, NULL, false, NULL, {{"franco", new Nodes::Type{Nodes::Type::Builtins::Struct, NULL, false, NULL, {{"gianni", new Nodes::Type{Nodes::Type::Builtins::Int}}}}}}}});
+      expr->type = Nodes::Expression::ExprType::dot_notation;
+      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+      strcpy(buf, ident.value.c_str());
+      int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
+      if (index < 0)
+        error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+      Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+      *var = variables.at(index);
+      
+      expr->u.dot_notation = new std::vector<Nodes::Variable>{};
+      expr->u.dot_notation->push_back(*var);
+      while (tryconsume({Tokens::TokenType::dot})) {
+        Tokens::Token id = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+        char* buffer = (char*)malloc(id.value.size()*sizeof(char));
+        strcpy(buffer, id.value.c_str());
+        int i = VectorUtils::find<Nodes::Variable>(var->type->interior, {buffer});
+        if (i < 0)
+          error({"Variable not Found", Formatting::format("Variable '%s' does not exist", id.value.c_str())});
+        Nodes::Variable* v = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+        *v = var->type->interior.at(i);
+        expr->u.dot_notation->push_back(*v);
+        *var = *v;
+      }
+      expr->returnType = var->type;
+    } else {
+      expr->type = Nodes::Expression::ExprType::variable;
+      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+      strcpy(buf, ident.value.c_str());
+      int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
+      if (index < 0)
+        error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+      Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+      *var = variables.at(index);
+      expr->returnType = var->type;
+      expr->u.var_expr = var;
+    }
+  } else if (tryconsume({.type=Tokens::TokenType::symbols, .value="*"})) {
+    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    
+    char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+    strcpy(buf, ident.value.c_str());
+    int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
+    if (index < 0)
+      error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+    Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+    *var = variables.at(index);
+    if (var->type->type != Nodes::Type::Builtins::Pointer)
+      error({"Internal Error", "Cannot dereference a non pointer type"});
+    
+    expr->type = Nodes::Expression::ExprType::dereference;
+    expr->returnType = var->type->pointsTo;
+    expr->u.var_expr = var;
+  } else if (tryconsume({.type=Tokens::TokenType::symbols, .value="&"})) {
+    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    
+    char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+    strcpy(buf, ident.value.c_str());
+    int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
+    if (index < 0)
+      error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+    Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
+    *var = variables.at(index);
+    
+    expr->type = Nodes::Expression::ExprType::reference;
+    expr->returnType = new Nodes::Type{Nodes::Type::Builtins::Pointer, var->type, false,};
+    expr->u.var_expr = var;
+  } else {
+    error({"Syntax Error", "Invalid Expression"});
+  }
+
+  if (tryconsume({Tokens::TokenType::As})) {
+    Nodes::Expression* ex = new Nodes::Expression{};
+    *ex = *expr;
+    Nodes::CastExpr* cast = new Nodes::CastExpr{ex, parseType()};
+    expr->type = Nodes::Expression::ExprType::cast;
+    expr->returnType = cast->type;
+    expr->u.cast_expr = cast;
+  }
+
+  if (peek().type == Tokens::TokenType::symbols) {
+    Tokens::Token syms = consume();
+    char* symbols = (char*)malloc(syms.value.size()*sizeof(char));
+    strcpy(symbols, syms.value.c_str());
+
+    int index = VectorUtils::find<Nodes::Operation>(this->operations, {.symbols = symbols}, [](Nodes::Operation a, Nodes::Operation b) {
+      return strcmp(a.symbols, b.symbols) == 0;
+    });
+    if (index < 0)
+      error({"Internal Error", "Operation never declared"});
+    
+    Nodes::Operation op = operations.at(index);
+    Nodes::CustomExpr* c_expr = new Nodes::CustomExpr{};
+    c_expr->op = op;
+    Nodes::Expression& right = parseExpr();
+    if (right.type == Nodes::Expression::ExprType::custom && right.u.custom->op.precedence < c_expr->op.precedence) {
+      c_expr->a = expr;
+      c_expr->b = right.u.custom->a;
+      right.u.custom->a = new Nodes::Expression{Nodes::Expression::ExprType::custom, c_expr->op.returnType, {.custom = c_expr}};
+      expr = &right;
+    } else {
+      c_expr->a = expr;
+      c_expr->b = &right;
+      expr = new Nodes::Expression{Nodes::Expression::ExprType::custom, c_expr->op.returnType, {.custom = c_expr}};
+    }
+
+    if (*(expr->u.custom->a->returnType) != *(expr->u.custom->op.a.type) || *(expr->u.custom->b->returnType) != *(expr->u.custom->op.b.type))
+      error({"Type Mismatch", "No operation exists with provided operands"});
+  }
+
+  if (paren)
+    tryconsume({Tokens::TokenType::close_paren}, {"Missing Token", "Expected closing parenthesis"});
+
+  return *expr;
   
-  else {
-    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
-  }
 }
 
 Tokens::Token& Parser::Parser::getIdentNamespaces() {
@@ -64,8 +284,8 @@ Tokens::Token& Parser::Parser::getIdentNamespaces() {
   *ret = ident;
   stringstream buf;
   buf << ret->value;
-  while (tryconsume({Tokens::TokenType::dot})) {
-    *ret = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier after dot for namespace"});
+  while (tryconsume({Tokens::TokenType::colon})) {
+    *ret = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier after colon for namespace"});
     buf << ":" << ret->value;
   }
   std::string temp = buf.str();
@@ -89,7 +309,10 @@ Tokens::Token& Parser::Parser::applyNamespaces(Tokens::Token& token) {
 
 Nodes::Type* Parser::Parser::parseType() {
   Nodes::Type* t = new Nodes::Type{};
-  if (peek().type == Tokens::TokenType::symbols && consume().value == "*") {
+  t->mut = false;
+  if (tryconsume({Tokens::TokenType::Unsigned}))
+    t->Unsigned = true;
+  if (tryconsume({.type=Tokens::TokenType::symbols, .value="*"})) {
     Nodes::Type* temp = parseType();
     *t = {Nodes::Type::Builtins::Pointer, temp};
   //TODO ARRAY WITH EXPRESSION
@@ -112,7 +335,7 @@ Nodes::Type* Parser::Parser::parseType() {
   } else if (tryconsume({Tokens::TokenType::Struct})) {
 
     t->type = Nodes::Type::Builtins::Struct;
-    if (peek().type == Tokens::TokenType::symbols && consume().value == ":") {
+    if (tryconsume({Tokens::TokenType::colon})) {
       bool found = doUntilFind({Tokens::TokenType::open_curly}, [this, &t](){
         Nodes::Type* implType = parseType();
         if (implType->type != Nodes::Type::Builtins::Interface)
@@ -145,7 +368,13 @@ Nodes::Type* Parser::Parser::parseType() {
         Nodes::Type* tp = parseType();
         Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
         tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected semicolon"});
-        t->interior[ident.value] = tp;
+        char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+        strcpy(buf, ident.value.c_str());
+        Nodes::Variable var = {buf, tp};
+        int index = VectorUtils::find(t->interior, var);
+        if (index > -1)
+          error({"Internal Error", Formatting::format("Struct member '%s' already exists", buf)});
+        t->interior.push_back(var);
       }
     });
     if (!found)
@@ -162,7 +391,13 @@ Nodes::Type* Parser::Parser::parseType() {
       Nodes::Type* tp = parseType();
       Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
       tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected semicolon"});
-      t->interior[ident.value] = tp;
+      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+      strcpy(buf, ident.value.c_str());
+      Nodes::Variable var = {buf, tp};
+      int index = VectorUtils::find(t->interior, var);
+      if (index > -1)
+        error({"Internal Error", Formatting::format("Union member '%s' already exists", buf)});
+      t->interior.push_back(var);
     });
     if (!found)
       error({"Missing Token", "Expected closing curly bracket"});
@@ -180,11 +415,41 @@ Nodes::Type* Parser::Parser::parseType() {
     if (!declared_types.contains(peek().value))
       error({"Invalid Type", Formatting::format("Identifier '%s' does not name a type", consume().value.c_str())});
     *t = {Nodes::Type::Builtins::Custom};
-    t->alias = consume().value;
+    std::string val = consume().value;
+    char* buf = (char*)malloc(val.size()*sizeof(char));
+    strcpy(buf, val.c_str());
+    t->alias = buf;
   }
 
   t->mut = tryconsume({Tokens::TokenType::Mutable});
   return t;
+}
+
+Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
+  Nodes::Type* ret = (Nodes::Type*)malloc(sizeof(Nodes::Type));
+  ret->mut = false;
+
+  switch (lit.type) {
+    case Literals::LiteralType::INT :
+      ret->type = Nodes::Type::Builtins::Int;
+      break;
+    case Literals::LiteralType::LONG :
+      ret->type = Nodes::Type::Builtins::Long;
+      break;
+    case Literals::LiteralType::FLOAT :
+      ret->type = Nodes::Type::Builtins::Float;
+      break;
+    case Literals::LiteralType::DOUBLE :
+      ret->type = Nodes::Type::Builtins::Double;
+      break;
+    case Literals::LiteralType::CHAR :
+      ret->type = Nodes::Type::Builtins::Char;
+      break;
+    case Literals::LiteralType::STRING :
+      ret->type = Nodes::Type::Builtins::String;
+      break;
+  }
+  return ret;
 }
 
 Nodes::Method Parser::Parser::parseMethodSig() {
@@ -201,7 +466,9 @@ Nodes::Method Parser::Parser::parseMethodSig() {
       if (peek().type != Tokens::TokenType::comma && peek().type != Tokens::TokenType::close_paren)
         error({"Unexpected Token", Formatting::format("Token '%s' is not comma or closing parenthesis", consume().toString().c_str())});
       tryconsume({Tokens::TokenType::comma});
-      params.push_back(Nodes::Variable{paramIdent.value, paramType});
+      char* buf = (char*)malloc(paramIdent.value.size()*sizeof(char));
+      strcpy(buf, paramIdent.value.c_str());
+      params.push_back(Nodes::Variable{buf, paramType});
     });
     if (!found)
       error({"Missing Token", "Expected closing parenthesis"});
@@ -214,11 +481,17 @@ Nodes::Method Parser::Parser::parseMethodSig() {
     if (!found)
       error({"Missing Token", "Missing closing curly bracket"});
   }
-  return Nodes::Method{retType, ident.value, params, body};
+  char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+  strcpy(buf, ident.value.c_str());
+  return Nodes::Method{retType, buf, params, body};
 }
 
 Tokens::Token Parser::Parser::null() {
   return Tokens::nullToken();
+}
+
+bool Parser::Parser::isType() {
+  return peek().type == Tokens::TokenType::Int || peek().type == Tokens::TokenType::Long || peek().type == Tokens::TokenType::Float || peek().type == Tokens::TokenType::Double || peek().type == Tokens::TokenType::Byte || peek().type == Tokens::TokenType::Char || peek().type == Tokens::TokenType::String || peek().type == Tokens::TokenType::Struct || peek().type == Tokens::TokenType::Union || peek().type == Tokens::TokenType::Interface || peek().type == Tokens::TokenType::Void || (peek().type == Tokens::TokenType::identifier && declared_types.contains(peek().value)); 
 }
 
 int Parser::Parser::getCurrentLine() {

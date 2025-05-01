@@ -2,14 +2,14 @@
 #include "Nodes.hpp"
 
 bool Nodes::Method::operator==(Method other) {
-  if (this->name != other.name)
+  if (strcmp(this->name, other.name) != 0)
     return false;
   if (*(this->returnType) != *(other.returnType))
     return false;
   if (this->params.size() != other.params.size())
     return false;
   for (int i = 0; i < this->params.size(); i++) {
-    if (params[i].type != other.params[i].type)
+    if (*(params.at(i).type) != *(other.params.at(i).type))
       return false;
   }
   return true;
@@ -21,11 +21,11 @@ bool Nodes::Method::operator!=(Method other) {
 bool Nodes::Type::operator==(Type other) {
   if (this->type != other.type)
     return false;
-  if (this->alias != other.alias)
+  if (this->alias != NULL && other.alias != NULL && strcmp(this->alias, other.alias) != 0)
     return false;
   if (this->mut != other.mut)
     return false;
-  if (this->pointsTo != other.pointsTo)
+  if (this->pointsTo != NULL && other.pointsTo != NULL && *(this->pointsTo) != *(other.pointsTo))
     return false;
   if (this->implementing.size() != other.implementing.size())
     return false;
@@ -39,7 +39,7 @@ bool Nodes::Type::operator==(Type other) {
       return false;
   }
   for (int i = 0; i < interior.size(); i++) {
-    if (interior[interior.getKey(i)] != other.interior[other.interior.getKey(i)])
+    if (interior[i].type != other.interior[i].type || strcmp(interior[i].name, other.interior[i].name) != 0)
       return false;
   }
   for (int i = 0; i < methods.size(); i++) {
@@ -51,4 +51,8 @@ bool Nodes::Type::operator==(Type other) {
 
 bool Nodes::Type::operator!=(Type other) {
   return !(*this == other);
+}
+
+bool Nodes::Variable::operator==(Variable a) {
+  return strcmp(this->name, a.name) == 0;
 }

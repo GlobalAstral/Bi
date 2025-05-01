@@ -35,6 +35,10 @@ namespace Map {
           return {};
         return this->keys[index];
       }
+
+      std::vector<K> getKeys() {
+        return this->keys;
+      }
     private:
       int find(K key) {
         for (int i = 0; i < keys.size(); i++) {
