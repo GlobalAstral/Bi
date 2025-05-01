@@ -17,6 +17,7 @@ bool Nodes::Method::operator==(const Method other) const {
 bool Nodes::Method::operator!=(const Method other) const {
   return !(*this == other);
 }
+
 bool Nodes::Type::operator==(const Type other) const {
   if (this->type != other.type)
     return false;
