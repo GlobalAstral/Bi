@@ -1,5 +1,4 @@
 #include <Parser/Nodes.hpp>
-#include "Nodes.hpp"
 
 bool Nodes::Method::operator==(const Method other) const {
   if (strcmp(this->name, other.name) != 0)
