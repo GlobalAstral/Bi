@@ -1,2 +1,4 @@
-binary + : <uint a, uint b, uint, 1>
+unary - : <int a, int, 1>
   ...
+
+-1

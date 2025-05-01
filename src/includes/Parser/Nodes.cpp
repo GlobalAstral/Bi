@@ -75,7 +75,7 @@ bool Nodes::Expression::operator==(const Expression a) const {
     case Nodes::Expression::ExprType::dereference :
       return this->u.var_expr == a.u.var_expr;
     case Nodes::Expression::ExprType::subscript :
-      return this->u.subscript->var == a.u.subscript->var && *(this->u.subscript->expr) == *(a.u.subscript->expr);
+      return (this->u.subscript->var == a.u.subscript->var) && (*(this->u.subscript->var.type) == *(a.u.subscript->var.type)) && *(this->u.subscript->expr) == *(a.u.subscript->expr);
     case Nodes::Expression::ExprType::function_call :
       if (this->u.method_call->mtd != a.u.method_call->mtd)
         return false;

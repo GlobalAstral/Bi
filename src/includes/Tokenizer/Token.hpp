@@ -21,5 +21,4 @@ namespace Tokens {
   };
 
   Token nullToken();
-
 }

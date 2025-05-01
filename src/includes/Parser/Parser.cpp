@@ -103,7 +103,8 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
       //TODO VARIABLES
     }
   } else {
-    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
+    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
+    parseExpr();
   }
 }
 
@@ -225,6 +226,27 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
     expr->type = Nodes::Expression::ExprType::reference;
     expr->returnType = new Nodes::Type{Nodes::Type::Builtins::Pointer, var->type, false,};
     expr->u.var_expr = var;
+  } else if (peek().type == Tokens::TokenType::symbols) {
+    Tokens::Token syms = consume();
+    Nodes::Expression& ex = parseExpr();
+    char* symbols = (char*)malloc(syms.value.size()*sizeof(char));
+    strcpy(symbols, syms.value.c_str());
+
+    int index = VectorUtils::find<Nodes::Operation>(this->operations, {.symbols = symbols}, [](Nodes::Operation a, Nodes::Operation b) {
+      return strcmp(a.symbols, b.symbols) == 0;
+    });
+    if (index < 0)
+      error({"Internal Error", "Operation never declared"});
+    
+    Nodes::Operation op = operations.at(index);
+    if (op.type != Nodes::Operation::OpType::unary)
+      error({"Internal Error", "Cannot use non-unary operation with single expression"});
+    
+    Nodes::CustomExpr* c_expr = new Nodes::CustomExpr{};
+    c_expr->op = op;
+    c_expr->a = &ex;
+
+    expr = new Nodes::Expression{Nodes::Expression::ExprType::custom, c_expr->op.returnType, {.custom = c_expr}};
   } else {
     error({"Syntax Error", "Invalid Expression"});
   }
@@ -503,5 +525,5 @@ int Parser::Parser::getCurrentLine() {
 }
 
 bool Parser::Parser::equalCriteria(Tokens::Token a, Tokens::Token b) {
-  return a.type == b.type;
+  return a.type == b.type && ((!a.value.empty() && !b.value.empty()) ? a.value == b.value : true);
 }
