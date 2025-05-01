@@ -163,6 +163,7 @@ void Preprocessor::Preprocessor::preprocessSingle(std::vector<Tokens::Token>& re
         error({"Invalid File", "Expected string literal for file name"});
       filename.erase(0, 1);
       filename.erase(filename.size()-1, 1);
+      filename.append(".bi");
       if (!filesystem::is_regular_file(filename)) 
         error({"Invalid File", Formatting::format("Cannot include file '%s'", token.value.c_str())});
       
