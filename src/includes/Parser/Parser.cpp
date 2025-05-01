@@ -103,8 +103,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
       //TODO VARIABLES
     }
   } else {
-    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
-    Nodes::Expression expr = parseExpr();
+    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
 }
 
@@ -160,7 +159,6 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
       expr->u.subscript = new Nodes::SubscriptExpr{*var, &e};
       tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
     } else if (peek().type == Tokens::TokenType::dot) {
-      // variables.push_back({"prova", new Nodes::Type{Nodes::Type::Builtins::Struct, NULL, false, NULL, {{"franco", new Nodes::Type{Nodes::Type::Builtins::Struct, NULL, false, NULL, {{"gianni", new Nodes::Type{Nodes::Type::Builtins::Int}}}}}}}});
       expr->type = Nodes::Expression::ExprType::dot_notation;
       char* buf = (char*)malloc(ident.value.size()*sizeof(char));
       strcpy(buf, ident.value.c_str());
