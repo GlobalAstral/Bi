@@ -1,4 +1,5 @@
 #include <Parser/Literal.hpp>
+#include "Literal.hpp"
 
 Literals::Literal& Literals::parseLiteral(std::string value) {
   Literal* lit = (Literal*)malloc(sizeof(Literal));
@@ -56,4 +57,23 @@ Literals::Literal& Literals::parseLiteral(std::string value) {
   }
 
   return *lit;
+}
+bool Literals::Literal::operator==(Literal a) {
+  if (this->type != a.type)
+    return false;
+  
+  switch (this->type) {
+    case LiteralType::CHAR :
+      return this->u.c == a.u.c;
+    case LiteralType::DOUBLE :
+      return this->u.d == a.u.d;
+    case LiteralType::FLOAT :
+      return this->u.f == a.u.f;
+    case LiteralType::INT :
+      return this->u.i == a.u.i;
+    case LiteralType::LONG :
+      return this->u.l == a.u.l;
+    case LiteralType::STRING :
+      return strcmp(this->u.s, a.u.s) == 0;
+  }
 }
