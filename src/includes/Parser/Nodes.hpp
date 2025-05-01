@@ -24,6 +24,7 @@ namespace Nodes {
     std::vector<Nodes::Method> methods;
     std::vector<Type*> implementing;
     bool Unsigned;
+    Expression* size;
 
     bool operator==(Type other);
     bool operator!=(Type other);
@@ -41,6 +42,7 @@ namespace Nodes {
     char* name;
     Nodes::Type* type;
     bool operator==(Variable a);
+    bool operator!=(Variable a);
   };
 
   struct Method {
@@ -63,6 +65,9 @@ namespace Nodes {
     Type* returnType;
     int precedence;
     std::vector<Node>* stmt;
+
+    bool operator==(Operation a);
+    bool operator!=(Operation a);
   };
 
   struct Node {
@@ -117,5 +122,8 @@ namespace Nodes {
       CastExpr* cast_expr;
       CustomExpr* custom;
     } u;
+
+    bool operator==(Expression a);
+    bool operator !=(Expression a);
   };
 }

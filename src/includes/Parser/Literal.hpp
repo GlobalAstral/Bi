@@ -4,6 +4,7 @@
 #include <Utils/Errors.hpp>
 #include <Utils/StringUtils.hpp>
 #include <Utils/Constants.hpp>
+#include <string.h>
 
 namespace Literals {
 
@@ -21,6 +22,9 @@ namespace Literals {
       char c;
       char* s;
     } u;
+
+    bool operator==(Literal a);
+    bool operator!=(Literal a);
   };
 
   Literal& parseLiteral(std::string value);

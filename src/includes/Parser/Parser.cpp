@@ -313,7 +313,12 @@ Nodes::Type* Parser::Parser::parseType() {
   if (tryconsume({.type=Tokens::TokenType::symbols, .value="*"})) {
     Nodes::Type* temp = parseType();
     *t = {Nodes::Type::Builtins::Pointer, temp};
-  //TODO ARRAY WITH EXPRESSION
+  } else if (tryconsume({Tokens::TokenType::open_square})) {
+    Nodes::Expression& ex = parseExpr();
+    tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
+    Nodes::Type* temp = parseType();
+    *t = {Nodes::Type::Builtins::Array, temp};
+    t->size = &ex;
   } else if (tryconsume({Tokens::TokenType::Int})) {
     *t = {Nodes::Type::Builtins::Int};
   } else if (tryconsume({Tokens::TokenType::Float})) {
@@ -426,6 +431,7 @@ Nodes::Type* Parser::Parser::parseType() {
 Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
   Nodes::Type* ret = (Nodes::Type*)malloc(sizeof(Nodes::Type));
   ret->mut = false;
+  ret->Unsigned = false;
 
   switch (lit.type) {
     case Literals::LiteralType::INT :
