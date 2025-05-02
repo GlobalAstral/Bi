@@ -28,6 +28,8 @@ namespace Parser {
       Nodes::Method parseMethodSig();
       bool isType();
 
+      std::vector<Nodes::Method>* getMethodsWithArgs(char* name, std::vector<Nodes::Variable> params);
+
       Tokens::Token null();
       int getCurrentLine();
       bool equalCriteria(Tokens::Token a, Tokens::Token b);

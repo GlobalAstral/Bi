@@ -29,5 +29,6 @@ namespace VectorUtils {
   
     return -1;
   }
+
 }
 

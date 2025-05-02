@@ -1,4 +1,5 @@
 #include <Parser/Parser.hpp>
+#include "Parser.hpp"
 
 Parser::Parser::Parser(std::vector<Tokens::Token> toks) {
   this->content = toks;
@@ -153,15 +154,28 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
         mtd.params.push_back({.type = e.returnType});
       }, {Tokens::TokenType::comma}, {"Missing Token", "Missing comma between parameters"});
 
-      //TODO IF 1 METHOD ONLY EXISTS TAKE IT WITHOUT ARROW
-      tryconsume({Tokens::TokenType::arrow}, {"Missing Token", "Expected return type specififier"});
-      mtd.returnType = parseType();
+      std::vector<Nodes::Method>* found = getMethodsWithArgs(mtd.name, mtd.params);
+      Nodes::Method* method;
 
-      int index = VectorUtils::find<Nodes::Method>(this->methods, mtd);
-      if (index < 0)
+      if (found->size() == 0)
         error({"Method not Found", Formatting::format("Method '%s' does not exist", ident.value.c_str())});
 
-      Nodes::Method* method = &methods[index];
+      if (found->size() > 1) {
+        tryconsume({Tokens::TokenType::arrow}, {"Missing Token", "Expected return type specififier"});
+        mtd.returnType = parseType();
+
+        int index = VectorUtils::find<Nodes::Method>(*found, mtd);
+        if (index < 0)
+          error({"Method not Found", Formatting::format("Method '%s' does not exist", ident.value.c_str())});
+        method = &found->at(index);
+      } else {
+        method = &found->at(0);
+        if (tryconsume({Tokens::TokenType::arrow})) {
+          if (*parseType() != *(method->returnType))
+            error({"Type Mismatch", "Type in specifier is not the same as only available declared method"});
+        }
+      }
+
       expr->returnType = method->returnType;
       expr->u.method_call = new Nodes::MethodCall{method, param_values};
     } else if (tryconsume({Tokens::TokenType::open_square})) {
@@ -547,6 +561,22 @@ Tokens::Token Parser::Parser::null() {
 
 bool Parser::Parser::isType() {
   return peek().type == Tokens::TokenType::Int || peek().type == Tokens::TokenType::Long || peek().type == Tokens::TokenType::Float || peek().type == Tokens::TokenType::Double || peek().type == Tokens::TokenType::Byte || peek().type == Tokens::TokenType::Char || peek().type == Tokens::TokenType::String || peek().type == Tokens::TokenType::Struct || peek().type == Tokens::TokenType::Union || peek().type == Tokens::TokenType::Interface || peek().type == Tokens::TokenType::Void || peek().type == Tokens::TokenType::Uint || peek().type == Tokens::TokenType::Ulong || (peek().type == Tokens::TokenType::identifier && declared_types.contains(peek().value)); 
+}
+
+std::vector<Nodes::Method>* Parser::Parser::getMethodsWithArgs(char *name, std::vector<Nodes::Variable> params) {
+  std::vector<Nodes::Method>* ret = new std::vector<Nodes::Method>{};
+  for (auto mtd : methods) {
+    if (strcmp(mtd.name, name) == 0 && mtd.params.size() == params.size()) {
+      bool equal = true;
+      for (int i = 0; i < mtd.params.size(); i++) {
+        if (mtd.params[i] != params[i])
+          equal = false;
+      }
+      if (equal)
+        ret->push_back(mtd);
+    }
+  }
+  return ret;
 }
 
 int Parser::Parser::getCurrentLine() {
