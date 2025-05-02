@@ -153,6 +153,7 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
         mtd.params.push_back({.type = e.returnType});
       }, {Tokens::TokenType::comma}, {"Missing Token", "Missing comma between parameters"});
 
+      //TODO IF 1 METHOD ONLY EXISTS TAKE IT WITHOUT ARROW
       tryconsume({Tokens::TokenType::arrow}, {"Missing Token", "Expected return type specififier"});
       mtd.returnType = parseType();
 
@@ -167,11 +168,14 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
       expr->type = Nodes::Expression::ExprType::subscript;
       char* buf = (char*)malloc(ident.value.size()*sizeof(char));
       strcpy(buf, ident.value.c_str());
+
       int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
       if (index < 0)
         error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
+      
       Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
       *var = variables.at(index);
+      
       Nodes::Expression& e = parseExpr();
       expr->returnType = var->type->pointsTo;
       expr->u.subscript = new Nodes::SubscriptExpr{*var, &e};
@@ -192,6 +196,8 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
         Tokens::Token id = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
         char* buffer = (char*)malloc(id.value.size()*sizeof(char));
         strcpy(buffer, id.value.c_str());
+        if (var->type->type != Nodes::Type::Builtins::Struct && var->type->type != Nodes::Type::Builtins::Union)
+          error({"Internal Error", "Cannot use dot notation on non struct or union type"});
         int i = VectorUtils::find<Nodes::Variable>(var->type->interior, {buffer});
         if (i < 0)
           error({"Variable not Found", Formatting::format("Variable '%s' does not exist", id.value.c_str())});
@@ -496,6 +502,7 @@ Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
 }
 
 Nodes::Method Parser::Parser::parseMethodSig() {
+  bool Inline = tryconsume({Tokens::TokenType::Inline});
   Nodes::Type* retType = parseType();
   Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
   ident = applyNamespaces(ident);
@@ -531,7 +538,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
   }
   char* buf = (char*)malloc(ident.value.size()*sizeof(char));
   strcpy(buf, ident.value.c_str());
-  return Nodes::Method{retType, buf, params, body};
+  return Nodes::Method{retType, buf, params, body, Inline};
 }
 
 Tokens::Token Parser::Parser::null() {

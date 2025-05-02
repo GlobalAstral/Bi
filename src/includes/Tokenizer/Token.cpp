@@ -31,7 +31,6 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::Interface: return "INTERFACE";
     case Tokens::TokenType::Return: return "RETURN";
     case Tokens::TokenType::Mutable: return "MUTABLE";
-    case Tokens::TokenType::Unsigned: return "UNSIGNED";
     case Tokens::TokenType::Unary: return "UNARY";
     case Tokens::TokenType::Binary: return "BINARY";
     case Tokens::TokenType::Type: return "TYPE";
@@ -58,6 +57,7 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::arrow: return "ARROW";
     case Tokens::TokenType::colon: return "COLON";
     case Tokens::TokenType::method: return "METHOD";
+    case Tokens::TokenType::Inline: return "INLINE";
     default: return "NULL";
   }
 }

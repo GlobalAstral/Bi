@@ -126,8 +126,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::Return, line});
         } else if (buffer == "mutable") {
           tokens.push_back({Tokens::TokenType::Mutable, line});
-        } else if (buffer == "unsigned") {
-          tokens.push_back({Tokens::TokenType::Unsigned, line});
+        } else if (buffer == "inline") {
+          tokens.push_back({Tokens::TokenType::Inline, line});
         } else if (buffer == "unary") {
           tokens.push_back({Tokens::TokenType::Unary, line});
         } else if (buffer == "binary") {

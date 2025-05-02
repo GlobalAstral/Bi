@@ -8,8 +8,8 @@ namespace Tokens {
     open_paren, close_paren, open_curly, close_curly, open_angle, close_angle, open_square, close_square, semicolon, at, dot, comma,
     literal, symbols, identifier,
     ellipsis, arrow, colon,
-    Int, Uint, Float, Long, Ulong, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
-    Return, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer, Impl, method,
+    Int, Uint, Float, Long, Ulong, Double, Char, Byte, String, Void, Mutable, Struct, Union, Interface, As,
+    Return, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer, Impl, method, Inline,
     preprocessor, define, undefine, defined, endif, elseif, include
   };
 
