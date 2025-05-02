@@ -37,7 +37,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
   } else if (tryconsume({Tokens::TokenType::open_curly})) {
     std::vector<Nodes::Node> scope;
     bool notFound = true;
-    std::vector<Nodes::Variable> prev_vars = variables;
+    int prev_index = variables.size()-1;
     while (hasPeek()) {
       if (tryconsume({Tokens::TokenType::close_curly})) {
         notFound = false;
@@ -47,7 +47,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     }
     if (notFound)
       error({"Missing Token", "Expected closing curly bracket"});
-    variables = prev_vars;
+    variables.erase(variables.begin()+prev_index, variables.end());
     nodes.push_back({Nodes::NodeType::scope, {.scope = new Nodes::Scope{scope}}});
   } else if (tryconsume({Tokens::TokenType::ellipsis})) {
     nodes.push_back({Nodes::NodeType::pass});
@@ -525,7 +525,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
   }
   if (!tryconsume({Tokens::TokenType::semicolon})) {
     tryconsume({Tokens::TokenType::open_curly}, {"Missing Token", "Expected opening curly bracket"});
-    std::vector<Nodes::Variable> prev_vars = variables;
+    int prev_index = variables.size()-1;
     for (auto param : params)
       variables.push_back(param);
     
@@ -534,7 +534,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
     });
     if (!found)
       error({"Missing Token", "Missing closing curly bracket"});
-    variables = prev_vars;
+    variables.erase(variables.begin()+prev_index, variables.end());
   }
   char* buf = (char*)malloc(ident.value.size()*sizeof(char));
   strcpy(buf, ident.value.c_str());
