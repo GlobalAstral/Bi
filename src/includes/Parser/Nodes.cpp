@@ -1,4 +1,5 @@
 #include <Parser/Nodes.hpp>
+#include "Nodes.hpp"
 
 bool Nodes::Method::operator==(const Method other) const {
   if (strcmp(this->name, other.name) != 0)
@@ -33,7 +34,7 @@ bool Nodes::Type::operator==(const Type other) const {
     return false;
   if (this->methods.size() != other.methods.size())
     return false;
-  if (*(this->size) != *(other.size))
+  if (this->size != NULL && other.size != NULL && *(this->size) != *(other.size))
     return false;
   
   for (int i = 0; i < implementing.size(); i++) {
@@ -130,4 +131,20 @@ bool Nodes::Operation::operator==(const Operation a) const {
 
 bool Nodes::Operation::operator!=(const Operation a) const {
   return !(*this == a);
+}
+
+std::string Nodes::Node::toString() const {
+  std::stringstream ss;
+  
+  switch (this->type) {
+    case Nodes::NodeType::pass :
+      ss << "PASS";
+    case Nodes::NodeType::scope :
+      ss << "{ ";
+      for (auto node : this->u.scope->nodes)
+        ss << node.toString() << " ; ";
+      ss << " }";
+  }
+
+  return ss.str();
 }

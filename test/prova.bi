@@ -1,4 +1,5 @@
-unary - : <int a, int, 1>
+
+unary - : <uint a, int, 1>
   ...
 
--1
+int a = -20;

@@ -30,7 +30,7 @@ namespace Nodes {
   };
 
   enum class NodeType {
-    pass, scope, method_decl, 
+    pass, scope, method_decl, var_decl, var_set,
   };
 
   struct Scope {
@@ -69,12 +69,21 @@ namespace Nodes {
     bool operator!=(const Operation a) const;
   };
 
+  struct VarSet {
+    Variable var;
+    Expression* expr;
+  };
+
   struct Node {
     NodeType type;
     union {
       Scope* scope;
       Method* method_decl;
+      Variable* var_decl;
+      VarSet* var_set;
     } u;
+
+    std::string toString() const;
   };
 
   struct MethodCall {

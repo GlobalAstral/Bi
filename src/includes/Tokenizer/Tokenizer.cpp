@@ -164,6 +164,8 @@ std::vector<Tokens::Token> Tokenizer::Tokenizer::tokenize() {
           tokens.push_back({Tokens::TokenType::include, line});
         } else if (buffer == "impl") {
           tokens.push_back({Tokens::TokenType::Impl, line});
+        } else if (buffer == "method") {
+          tokens.push_back({Tokens::TokenType::method, line});
         } else if (buffer == "asm") {
           while (tryconsume(' ') || tryconsume('\r'));
           while (tryconsume('\n')) {line++;};

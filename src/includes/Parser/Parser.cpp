@@ -67,14 +67,19 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     Tokens::Token a_ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
     char* a_name = (char*)malloc(a_ident.value.size()*sizeof(char));
     strcpy(a_name, a_ident.value.c_str());
-    op.a = {a_name, a_type};
+    Nodes::Variable var_a = {a_name, a_type};
+    Nodes::Variable var_b;
+    op.a = var_a;
+    variables.push_back(var_a);
     if (op.type == Nodes::Operation::OpType::binary) {
       tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Missing second variable for binary operation"});
       Nodes::Type* b_type = parseType();
       Tokens::Token b_ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
       char* b_name = (char*)malloc(b_ident.value.size()*sizeof(char));
       strcpy(b_name, b_ident.value.c_str());
-      op.b = {b_name, b_type};
+      var_b = {b_name, b_type};
+      op.b = var_b;
+      variables.push_back(var_b);
     }
     tryconsume({Tokens::TokenType::comma}, {"Missing Token", "Missing comma for operation parameters"});
     op.returnType = parseType();
@@ -86,25 +91,34 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     tryconsume({Tokens::TokenType::close_angle}, {"Missing Token", "Expected closing angle bracket"});
     std::vector<Nodes::Node>* o = new std::vector<Nodes::Node>{};
     parseSingle(*o);
-    op.stmt = o;
+    variables.erase(variables.begin()+VectorUtils::find(variables, var_a));
+    if (op.type == Nodes::Operation::OpType::binary)
+      variables.erase(variables.begin()+VectorUtils::find(variables, var_b));
 
+    op.stmt = o;
     operations.push_back(op);
+  } else if (tryconsume({Tokens::TokenType::method})) {
+    Nodes::Method* mtd = new Nodes::Method{};
+    *mtd = parseMethodSig();
+    this->methods.push_back(*mtd);
+    nodes.push_back({Nodes::NodeType::method_decl, {.method_decl = mtd}});
   } else if (isType()) {
-    int begin = _peek;
-    Nodes::Type* type = parseType();
-    tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
-    if (!tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
-      _peek = begin;
-      Nodes::Method* mtd = new Nodes::Method{};
-      *mtd = parseMethodSig();
-      this->methods.push_back(*mtd);
-      nodes.push_back({Nodes::NodeType::method_decl, {.method_decl = mtd}});
-    } else {
-      //TODO VARIABLES
+    Nodes::Type* t = parseType();
+    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    ident = applyNamespaces(ident);
+    char* name = (char*)malloc(ident.value.size()*sizeof(char));
+    strcpy(name, ident.value.c_str());
+    Nodes::Variable* var = new Nodes::Variable{name, t};
+    nodes.push_back({Nodes::NodeType::var_decl, {.var_decl = var}});
+    if (tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
+      Nodes::Expression& expr = parseExpr();
+      if (*t != *(expr.returnType))
+        error({"Type Mismatch", Formatting::format("Cannot assign value of type to variable of different type")});
+      nodes.push_back({Nodes::NodeType::var_set, {.var_set = new Nodes::VarSet{*var, &expr}}});
     }
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
   } else {
-    // error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
-    parseExpr();
+    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
 }
 
@@ -457,10 +471,10 @@ Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
 
   switch (lit.type) {
     case Literals::LiteralType::INT :
-      ret->type = Nodes::Type::Builtins::Int;
+      ret->type = Nodes::Type::Builtins::Uint;
       break;
     case Literals::LiteralType::LONG :
-      ret->type = Nodes::Type::Builtins::Long;
+      ret->type = Nodes::Type::Builtins::Ulong;
       break;
     case Literals::LiteralType::FLOAT :
       ret->type = Nodes::Type::Builtins::Float;
@@ -501,11 +515,17 @@ Nodes::Method Parser::Parser::parseMethodSig() {
   }
   if (!tryconsume({Tokens::TokenType::semicolon})) {
     tryconsume({Tokens::TokenType::open_curly}, {"Missing Token", "Expected opening curly bracket"});
+    for (auto param : params)
+      variables.push_back(param);
+    
     bool found = doUntilFind({Tokens::TokenType::close_curly}, [this, &body](){
       parseSingle(body);
     });
     if (!found)
       error({"Missing Token", "Missing closing curly bracket"});
+    
+    for (auto param : params)
+      variables.erase(variables.begin()+VectorUtils::find(variables, param));
   }
   char* buf = (char*)malloc(ident.value.size()*sizeof(char));
   strcpy(buf, ident.value.c_str());
@@ -517,7 +537,7 @@ Tokens::Token Parser::Parser::null() {
 }
 
 bool Parser::Parser::isType() {
-  return peek().type == Tokens::TokenType::Int || peek().type == Tokens::TokenType::Long || peek().type == Tokens::TokenType::Float || peek().type == Tokens::TokenType::Double || peek().type == Tokens::TokenType::Byte || peek().type == Tokens::TokenType::Char || peek().type == Tokens::TokenType::String || peek().type == Tokens::TokenType::Struct || peek().type == Tokens::TokenType::Union || peek().type == Tokens::TokenType::Interface || peek().type == Tokens::TokenType::Void || (peek().type == Tokens::TokenType::identifier && declared_types.contains(peek().value)); 
+  return peek().type == Tokens::TokenType::Int || peek().type == Tokens::TokenType::Long || peek().type == Tokens::TokenType::Float || peek().type == Tokens::TokenType::Double || peek().type == Tokens::TokenType::Byte || peek().type == Tokens::TokenType::Char || peek().type == Tokens::TokenType::String || peek().type == Tokens::TokenType::Struct || peek().type == Tokens::TokenType::Union || peek().type == Tokens::TokenType::Interface || peek().type == Tokens::TokenType::Void || peek().type == Tokens::TokenType::Uint || peek().type == Tokens::TokenType::Ulong || (peek().type == Tokens::TokenType::identifier && declared_types.contains(peek().value)); 
 }
 
 int Parser::Parser::getCurrentLine() {

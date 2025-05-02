@@ -9,7 +9,7 @@ namespace Tokens {
     literal, symbols, identifier,
     ellipsis, arrow, colon,
     Int, Uint, Float, Long, Ulong, Double, Char, Byte, String, Void, Mutable, Unsigned, Struct, Union, Interface, As,
-    Return, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer, Impl,
+    Return, Unary, Binary, Asm, Type, If, Else, While, Do, For, Namespace, Defer, Impl, method,
     preprocessor, define, undefine, defined, endif, elseif, include
   };
 

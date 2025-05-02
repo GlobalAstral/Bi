@@ -57,6 +57,7 @@ std::string getTypeAsString(Tokens::TokenType type) {
     case Tokens::TokenType::ellipsis: return "ELLIPSIS";
     case Tokens::TokenType::arrow: return "ARROW";
     case Tokens::TokenType::colon: return "COLON";
+    case Tokens::TokenType::method: return "METHOD";
     default: return "NULL";
   }
 }
