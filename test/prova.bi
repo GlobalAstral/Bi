@@ -1,5 +1,3 @@
+uint a;
 
-method int main {
-  defer return 0;
-  int a;
-}
+a = 10;

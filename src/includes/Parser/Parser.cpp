@@ -149,9 +149,28 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     if (temp.size() != 1)
       error({"Syntax Error", "Cannot defer multiple statements"});
     defers.push_back(temp.at(0));
-  } else {
-    error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
+
+  Nodes::Expression& expr = parseExpr();
+
+  if (tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
+    Nodes::Expression& val = parseExpr();
+    switch (expr.type) {
+      case Nodes::Expression::ExprType::variable:
+      case Nodes::Expression::ExprType::dot_notation:
+      case Nodes::Expression::ExprType::dereference:
+      case Nodes::Expression::ExprType::subscript:
+        nodes.push_back({Nodes::NodeType::assign, {.assign = new Nodes::Assign{&expr, &val}}});
+        break;
+      default:
+        error({"Syntax Error", "Cannot assign to expression."});
+    }
+  } else {
+    if (expr.type != Nodes::Expression::ExprType::function_call)
+      error({"Syntax Error", "Expression is non-sense"});
+    nodes.push_back({Nodes::NodeType::expression, {.expr = &expr}});
+  }
+  tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected Semicolon"});
 }
 
 Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
@@ -305,7 +324,7 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
     tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
   }
 
-  if (peek().type == Tokens::TokenType::symbols) {
+  if (peek().type == Tokens::TokenType::symbols && peek().value != "=") {
     Tokens::Token syms = consume();
     char* symbols = (char*)malloc(syms.value.size()*sizeof(char));
     strcpy(symbols, syms.value.c_str());
