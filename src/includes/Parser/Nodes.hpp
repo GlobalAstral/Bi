@@ -105,8 +105,8 @@ namespace Nodes {
   };
 
   struct SubscriptExpr {
-    Variable var;
     Expression* expr;
+    Expression* index;
   };
 
   struct CastExpr {
@@ -137,6 +137,7 @@ namespace Nodes {
     union {
       Literals::Literal* lit;
       Variable* var_expr;
+      Expression* expr;
       MethodCall* method_call;
       SubscriptExpr* subscript;
       std::vector<Variable>* dot_notation;

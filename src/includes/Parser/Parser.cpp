@@ -189,22 +189,6 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
 
       expr->returnType = method->returnType;
       expr->u.method_call = new Nodes::MethodCall{method, param_values};
-    } else if (tryconsume({Tokens::TokenType::open_square})) {
-      expr->type = Nodes::Expression::ExprType::subscript;
-      char* buf = (char*)malloc(ident.value.size()*sizeof(char));
-      strcpy(buf, ident.value.c_str());
-
-      int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
-      if (index < 0)
-        error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
-      
-      Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
-      *var = variables.at(index);
-      
-      Nodes::Expression& e = parseExpr();
-      expr->returnType = var->type->pointsTo;
-      expr->u.subscript = new Nodes::SubscriptExpr{*var, &e};
-      tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
     } else if (peek().type == Tokens::TokenType::dot) {
       expr->type = Nodes::Expression::ExprType::dot_notation;
       char* buf = (char*)malloc(ident.value.size()*sizeof(char));
@@ -245,35 +229,20 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
       expr->u.var_expr = var;
     }
   } else if (tryconsume({.type=Tokens::TokenType::symbols, .value="*"})) {
-    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
+    Nodes::Expression& e = parseExpr();
     
-    char* buf = (char*)malloc(ident.value.size()*sizeof(char));
-    strcpy(buf, ident.value.c_str());
-    int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
-    if (index < 0)
-      error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
-    Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
-    *var = variables.at(index);
-    if (var->type->type != Nodes::Type::Builtins::Pointer)
+    if (e.returnType->type != Nodes::Type::Builtins::Pointer)
       error({"Internal Error", "Cannot dereference a non pointer type"});
     
     expr->type = Nodes::Expression::ExprType::dereference;
-    expr->returnType = var->type->pointsTo;
-    expr->u.var_expr = var;
+    expr->returnType = e.returnType->pointsTo;
+    expr->u.expr = &e;
   } else if (tryconsume({.type=Tokens::TokenType::symbols, .value="&"})) {
-    Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
-    
-    char* buf = (char*)malloc(ident.value.size()*sizeof(char));
-    strcpy(buf, ident.value.c_str());
-    int index = VectorUtils::find<Nodes::Variable>(this->variables, {buf});
-    if (index < 0)
-      error({"Variable not Found", Formatting::format("Variable '%s' does not exist", ident.value.c_str())});
-    Nodes::Variable* var = (Nodes::Variable*)malloc(sizeof(Nodes::Variable));
-    *var = variables.at(index);
+    Nodes::Expression& e = parseExpr();
     
     expr->type = Nodes::Expression::ExprType::reference;
-    expr->returnType = new Nodes::Type{Nodes::Type::Builtins::Pointer, var->type, false,};
-    expr->u.var_expr = var;
+    expr->returnType = new Nodes::Type{Nodes::Type::Builtins::Pointer, e.returnType, false,};
+    expr->u.expr = &e;
   } else if (peek().type == Tokens::TokenType::symbols) {
     Tokens::Token syms = consume();
     Nodes::Expression& ex = parseExpr();
@@ -306,6 +275,14 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
     expr->type = Nodes::Expression::ExprType::cast;
     expr->returnType = cast->type;
     expr->u.cast_expr = cast;
+  }
+
+  if (tryconsume({Tokens::TokenType::open_square})) {
+    expr->type = Nodes::Expression::ExprType::subscript;
+    Nodes::Expression& e = parseExpr();
+    expr->returnType = expr->returnType->pointsTo;
+    expr->u.subscript = new Nodes::SubscriptExpr{expr, &e};
+    tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
   }
 
   if (peek().type == Tokens::TokenType::symbols) {
