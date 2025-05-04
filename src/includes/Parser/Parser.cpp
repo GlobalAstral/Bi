@@ -121,6 +121,17 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
       nodes.push_back({Nodes::NodeType::var_set, {.var_set = new Nodes::VarSet{*var, &expr}}});
     }
     tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
+  } else if (tryconsume({Tokens::TokenType::Return})) {
+    Nodes::Expression& expr = parseExpr();
+    nodes.push_back({Nodes::NodeType::returnStmt, {.expr = &expr}});
+  } else if (peek().type == Tokens::TokenType::Asm) {
+    AssemblyParser asm_parser{variables, consume().value};
+    std::optional<std::vector<Nodes::AssemblyToken>> optional = asm_parser.parseText();
+    if (!optional.has_value())
+      error({"Internal Error", "Variable in assembly code not found"});
+    std::vector<Nodes::AssemblyToken>* toks = new std::vector<Nodes::AssemblyToken>{};
+    *toks = optional.value();
+    nodes.push_back({Nodes::NodeType::asm_code, {.asm_code = toks}});
   } else {
     error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
@@ -585,4 +596,48 @@ int Parser::Parser::getCurrentLine() {
 
 bool Parser::Parser::equalCriteria(Tokens::Token a, Tokens::Token b) {
   return a.type == b.type && ((!a.value.empty() && !b.value.empty()) ? a.value == b.value : true);
+}
+
+Parser::AssemblyParser::AssemblyParser(std::vector<Nodes::Variable> &vars, std::string txt) {
+  variables = &vars;
+  text = txt;
+}
+
+std::optional<std::vector<Nodes::AssemblyToken>> Parser::AssemblyParser::parseText() {
+  std::vector<Nodes::AssemblyToken> ret;
+  char* buf = (char*)malloc(text.size()*sizeof(char));
+  strcpy(buf, text.c_str());
+
+  std::stringstream stream;
+
+  while (*buf) {
+    if (*buf == '%') {
+      if (!stream.str().empty()) {
+        char* txt = (char*)malloc(stream.str().size()*sizeof(char));
+        strcpy(txt, stream.str().c_str());
+        ret.push_back({Nodes::AssemblyToken::AsmTokenType::text, {.text = txt}});
+        stream.str("");
+      }
+
+      buf++;
+      std::stringstream ss;
+      while (*buf != '%') {
+        ss << *buf;
+        buf++;
+      }
+      buf++;
+
+      char* name = (char*)malloc(ss.str().size()*sizeof(char));
+      strcpy(name, ss.str().c_str());
+
+      int index = VectorUtils::find<Nodes::Variable>(*variables, Nodes::Variable{name});
+      if (index < 0)
+        return {};
+      ret.push_back({Nodes::AssemblyToken::AsmTokenType::var, {.var = variables->at(index)}});
+    } else {
+      stream << *buf;
+      buf++;
+    }
+  }
+  return ret;
 }

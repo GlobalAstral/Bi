@@ -11,6 +11,7 @@
 #include <Utils/Map.hpp>
 #include <Utils/VectorUtils.hpp>
 #include <string.h>
+#include <optional>
 
 namespace Parser {
   class Parser : public Processor::Processor<Tokens::Token> {
@@ -39,5 +40,14 @@ namespace Parser {
       std::vector<Nodes::Method> methods{};
       std::vector<Nodes::Variable> variables{};
       std::vector<Nodes::Operation> operations{};
+  };
+
+  class AssemblyParser {
+    public:
+      AssemblyParser(std::vector<Nodes::Variable>& vars, std::string txt);
+      std::optional<std::vector<Nodes::AssemblyToken>> parseText();
+    private:
+      std::vector<Nodes::Variable>* variables;
+      std::string text;
   };
 }

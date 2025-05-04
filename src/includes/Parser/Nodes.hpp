@@ -30,7 +30,7 @@ namespace Nodes {
   };
 
   enum class NodeType {
-    pass, scope, method_decl, var_decl, var_set,
+    pass, scope, method_decl, var_decl, var_set, returnStmt, asm_code,
   };
 
   struct Scope {
@@ -75,6 +75,16 @@ namespace Nodes {
     Expression* expr;
   };
 
+  struct AssemblyToken {
+    enum class AsmTokenType {
+      var, text
+    } type;
+    union {
+      Variable var;
+      char* text;
+    } u;
+  };
+
   struct Node {
     NodeType type;
     union {
@@ -82,6 +92,8 @@ namespace Nodes {
       Method* method_decl;
       Variable* var_decl;
       VarSet* var_set;
+      Expression* expr;
+      std::vector<Nodes::AssemblyToken>* asm_code;
     } u;
 
     std::string toString() const;
