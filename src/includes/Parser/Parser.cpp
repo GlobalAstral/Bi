@@ -278,10 +278,13 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
   }
 
   if (tryconsume({Tokens::TokenType::open_square})) {
-    expr->type = Nodes::Expression::ExprType::subscript;
+    if (expr->returnType->type != Nodes::Type::Builtins::Array && expr->returnType->type != Nodes::Type::Builtins::Pointer)
+      error({"Internal Error", "Cannot index a non array or non pointer type"});
+    Nodes::Expression* ex = new Nodes::Expression{};
+    ex->type = Nodes::Expression::ExprType::subscript;
     Nodes::Expression& e = parseExpr();
-    expr->returnType = expr->returnType->pointsTo;
-    expr->u.subscript = new Nodes::SubscriptExpr{expr, &e};
+    ex->returnType = expr->returnType->pointsTo;
+    ex->u.subscript = new Nodes::SubscriptExpr{expr, &e};
     tryconsume({Tokens::TokenType::close_square}, {"Missing Token", "Expected closing square bracket"});
   }
 
