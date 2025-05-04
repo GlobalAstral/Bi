@@ -66,7 +66,6 @@ int main(int argc, char** argv) {
   for (Tokens::Token token : tokens) {
     cout << token.toString() << endl;
   }
-
   Parser::Parser parser{tokens};
   vector<Nodes::Node> nodes = parser.parse();
 

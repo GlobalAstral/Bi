@@ -101,6 +101,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     op.stmt = o;
     operations.push_back(op);
   } else if (tryconsume({Tokens::TokenType::method})) {
+    //TODO
     Nodes::Method* mtd = new Nodes::Method{};
     *mtd = parseMethodSig();
     this->methods.push_back(*mtd);
@@ -405,14 +406,14 @@ Nodes::Type* Parser::Parser::parseType() {
     bool found = doUntilFind({Tokens::TokenType::close_curly}, [this, &t](){
       if (tryconsume({Tokens::TokenType::Impl})) {
         Nodes::Method mtd = parseMethodSig();
-        if (mtd.content.size() <= 0)
+        if (mtd.scope == NULL)
           error({"Syntax Error", "Cannot declare method inside struct. Use an interface and implement it instead"});
         for (Nodes::Type* type : t->implementing) {
           bool found = false;
           for (int i = 0; i < type->methods.size(); i++) {
             if (type->methods[i] == mtd) {
               found = true;
-              type->methods[i].content = mtd.content;
+              type->methods[i].scope = mtd.scope;
             }
           }
           if (!found)
@@ -512,7 +513,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
   Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
   ident = applyNamespaces(ident);
   std::vector<Nodes::Variable> params;
-  std::vector<Nodes::Node> body;
+  Nodes::Node* body = new Nodes::Node{};
 
   if (tryconsume({Tokens::TokenType::open_paren})) {
     bool found = doUntilFind({Tokens::TokenType::close_paren}, [this, &params](){
@@ -533,13 +534,13 @@ Nodes::Method Parser::Parser::parseMethodSig() {
     int prev_index = variables.size()-1;
     for (auto param : params)
       variables.push_back(param);
-    
-    bool found = doUntilFind({Tokens::TokenType::close_curly}, [this, &body](){
-      parseSingle(body);
-    });
-    if (!found)
-      error({"Missing Token", "Missing closing curly bracket"});
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
     variables.erase(variables.begin()+prev_index, variables.end());
+
+    if (temp.size() != 1 || temp.at(0).type != Nodes::NodeType::scope)
+      error({"Syntax Error", "Expected scope as method body"});
+    *body = temp.at(0);
   }
   char* buf = (char*)malloc(ident.value.size()*sizeof(char));
   strcpy(buf, ident.value.c_str());

@@ -48,7 +48,7 @@ namespace Nodes {
     Nodes::Type* returnType;
     char* name;
     std::vector<Variable> params;
-    std::vector<Node> content;
+    Node* scope;
     bool Inline;
     bool operator==(const Method other) const;
     bool operator!=(const Method other) const;
