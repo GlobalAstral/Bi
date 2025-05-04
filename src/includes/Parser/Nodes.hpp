@@ -30,7 +30,7 @@ namespace Nodes {
   };
 
   enum class NodeType {
-    pass, scope, method_decl, var_decl, var_set, returnStmt, asm_code,
+    pass, scope, method_decl, var_decl, var_set, returnStmt, asm_code, defer,
   };
 
   struct Scope {
@@ -64,7 +64,7 @@ namespace Nodes {
     Variable b;
     Type* returnType;
     int precedence;
-    std::vector<Node>* stmt;
+    Node* stmt;
 
     bool operator==(const Operation a) const;
     bool operator!=(const Operation a) const;

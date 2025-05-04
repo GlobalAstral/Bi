@@ -48,6 +48,10 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     }
     if (notFound)
       error({"Missing Token", "Expected closing curly bracket"});
+    for (int i = defers.size()-1; i >= 0; i--) {
+      scope.push_back(defers.at(i));
+    }
+    defers.clear();
     variables.erase(variables.begin()+prev_index, variables.end());
     nodes.push_back({Nodes::NodeType::scope, {.scope = new Nodes::Scope{scope}}});
   } else if (tryconsume({Tokens::TokenType::ellipsis})) {
@@ -92,16 +96,20 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
       error({"Internal Error", "Operation Precedence must be a literal integer"});
     op.precedence = expr.u.lit->u.i;
     tryconsume({Tokens::TokenType::close_angle}, {"Missing Token", "Expected closing angle bracket"});
-    std::vector<Nodes::Node>* o = new std::vector<Nodes::Node>{};
-    parseSingle(*o);
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1 || temp.at(0).type != Nodes::NodeType::scope)
+      error({"Syntax Error", "Expected scope as operation body"});
     variables.erase(variables.begin()+VectorUtils::find(variables, var_a));
     if (op.type == Nodes::Operation::OpType::binary)
       variables.erase(variables.begin()+VectorUtils::find(variables, var_b));
 
+    Nodes::Node* o = new Nodes::Node{};
+    *o = temp.at(0);
+
     op.stmt = o;
     operations.push_back(op);
   } else if (tryconsume({Tokens::TokenType::method})) {
-    //TODO
     Nodes::Method* mtd = new Nodes::Method{};
     *mtd = parseMethodSig();
     this->methods.push_back(*mtd);
@@ -124,15 +132,23 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
   } else if (tryconsume({Tokens::TokenType::Return})) {
     Nodes::Expression& expr = parseExpr();
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
     nodes.push_back({Nodes::NodeType::returnStmt, {.expr = &expr}});
   } else if (peek().type == Tokens::TokenType::Asm) {
     AssemblyParser asm_parser{variables, consume().value};
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
     std::optional<std::vector<Nodes::AssemblyToken>> optional = asm_parser.parseText();
     if (!optional.has_value())
       error({"Internal Error", "Variable in assembly code not found"});
     std::vector<Nodes::AssemblyToken>* toks = new std::vector<Nodes::AssemblyToken>{};
     *toks = optional.value();
     nodes.push_back({Nodes::NodeType::asm_code, {.asm_code = toks}});
+  } else if (tryconsume({Tokens::TokenType::Defer})) {
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Cannot defer multiple statements"});
+    defers.push_back(temp.at(0));
   } else {
     error({"Syntax Error", Formatting::format("Token %s is nosense", peek().toString().c_str())});
   }
@@ -530,7 +546,6 @@ Nodes::Method Parser::Parser::parseMethodSig() {
       error({"Missing Token", "Expected closing parenthesis"});
   }
   if (!tryconsume({Tokens::TokenType::semicolon})) {
-    tryconsume({Tokens::TokenType::open_curly}, {"Missing Token", "Expected opening curly bracket"});
     int prev_index = variables.size()-1;
     for (auto param : params)
       variables.push_back(param);

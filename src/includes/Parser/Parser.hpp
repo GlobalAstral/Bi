@@ -40,6 +40,7 @@ namespace Parser {
       std::vector<Nodes::Method> methods{};
       std::vector<Nodes::Variable> variables{};
       std::vector<Nodes::Operation> operations{};
+      std::vector<Nodes::Node> defers{};
   };
 
   class AssemblyParser {
