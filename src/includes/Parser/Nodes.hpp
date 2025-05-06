@@ -20,7 +20,7 @@ namespace Nodes {
     Type* pointsTo;
     bool mut;
     char* alias;
-    std::vector<Variable> interior;
+    std::vector<Variable*> interior;
     std::vector<Nodes::Method> methods;
     std::vector<Type*> implementing;
     Expression* size;
@@ -34,7 +34,7 @@ namespace Nodes {
   };
 
   struct Scope {
-    std::vector<Node> nodes;
+    std::vector<Node*> nodes;
   };
 
   struct Variable {
@@ -47,21 +47,21 @@ namespace Nodes {
   struct Method {
     Nodes::Type* returnType;
     char* name;
-    std::vector<Variable> params;
+    std::vector<Variable*> params;
     Node* scope;
     bool Inline;
     bool operator==(const Method other) const;
     bool operator!=(const Method other) const;
   };
-
+  
   struct Operation {
     enum class OpType {
       unary,
       binary
     } type;
     char* symbols;
-    Variable a;
-    Variable b;
+    Variable* a;
+    Variable* b;
     Type* returnType;
     int precedence;
     Node* stmt;
@@ -71,7 +71,7 @@ namespace Nodes {
   };
 
   struct VarSet {
-    Variable var;
+    Variable* var;
     Expression* expr;
   };
 
@@ -80,7 +80,7 @@ namespace Nodes {
       var, text
     } type;
     union {
-      Variable var;
+      Variable* var;
       char* text;
     } u;
   };
@@ -105,10 +105,10 @@ namespace Nodes {
       Variable* var_decl;
       VarSet* var_set;
       Expression* expr;
-      std::vector<Nodes::AssemblyToken>* asm_code;
+      std::vector<Nodes::AssemblyToken*>* asm_code;
       Assign* assign;
       FlowControl* flow_control;
-      std::vector<Nodes::Node>* pack;
+      std::vector<Nodes::Node*>* pack;
     } u;
 
     std::string toString() const;
@@ -132,7 +132,7 @@ namespace Nodes {
   struct CustomExpr {
     Expression* a;
     Expression* b;
-    Operation op;
+    Operation* op;
   };
 
   struct Expression {

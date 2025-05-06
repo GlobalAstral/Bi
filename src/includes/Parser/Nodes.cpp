@@ -9,7 +9,7 @@ bool Nodes::Method::operator==(const Method other) const {
   if (this->params.size() != other.params.size())
     return false;
   for (int i = 0; i < this->params.size(); i++) {
-    if (*(params.at(i).type) != *(other.params.at(i).type))
+    if (*(params.at(i)->type) != *(other.params.at(i)->type))
       return false;
   }
   return true;
@@ -42,7 +42,7 @@ bool Nodes::Type::operator==(const Type other) const {
       return false;
   }
   for (int i = 0; i < interior.size(); i++) {
-    if (interior[i].type != other.interior[i].type || strcmp(interior[i].name, other.interior[i].name) != 0)
+    if (interior[i]->type != other.interior[i]->type || strcmp(interior[i]->name, other.interior[i]->name) != 0)
       return false;
   }
   for (int i = 0; i < methods.size(); i++) {
@@ -142,7 +142,7 @@ std::string Nodes::Node::toString() const {
     case Nodes::NodeType::scope :
       ss << "{ ";
       for (auto node : this->u.scope->nodes)
-        ss << node.toString() << " ; ";
+        ss << node->toString() << " ; ";
       ss << " }";
   }
 
