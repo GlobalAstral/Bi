@@ -69,6 +69,8 @@ int main(int argc, char** argv) {
   Parser::Parser parser{tokens};
   vector<Nodes::Node*> nodes = parser.parse();
   cout << endl << "PARSED NODES:" << endl;
+  //TODO ADD BOOLS
+  
   
 	return 0;
 }

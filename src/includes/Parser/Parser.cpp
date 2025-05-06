@@ -38,7 +38,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node*> &nodes) {
   } else if (tryconsume({Tokens::TokenType::open_curly})) {
     std::vector<Nodes::Node*> scope;
     bool notFound = true;
-    int prev_index = variables.size()-1;
+    int prev_index = variables.size();
     this->inScope = true;
     while (hasPeek()) {
       if (tryconsume({Tokens::TokenType::close_curly})) {
@@ -53,7 +53,8 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node*> &nodes) {
       scope.push_back(defers.at(i));
     }
     defers.clear();
-    variables.erase(variables.begin()+prev_index, variables.end());
+    if (variables.size() != prev_index)
+      variables.erase(variables.begin()+prev_index, variables.end());
     nodes.push_back(new Nodes::Node{Nodes::NodeType::scope, {.scope = new Nodes::Scope{scope}}});
     this->inScope = false;
   } else if (tryconsume({Tokens::TokenType::ellipsis})) {
@@ -436,7 +437,7 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
       expr = new Nodes::Expression{Nodes::Expression::ExprType::custom, c_expr->op->returnType, {.custom = c_expr}};
     }
 
-    if (*(expr->u.custom->a->returnType) != *(expr->u.custom->op->a->type) || *(expr->u.custom->b->returnType) != *(expr->u.custom->op->b->type))
+    if ((expr->u.custom->op->a != NULL && expr->u.custom->a != NULL && *(expr->u.custom->a->returnType) != *(expr->u.custom->op->a->type) ) || ((expr->u.custom->op->b != NULL && expr->u.custom->b != NULL) && *(expr->u.custom->b->returnType) != *(expr->u.custom->op->b->type)))
       error({"Type Mismatch", "No operation exists with provided operands"});
   }
 
@@ -635,6 +636,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
   ident = applyNamespaces(ident);
   std::vector<Nodes::Variable*> params;
   Nodes::Node* body = new Nodes::Node{};
+  Nodes::Method* mtd = new Nodes::Method{};
 
   if (tryconsume({Tokens::TokenType::open_paren})) {
     bool found = doUntilFind({Tokens::TokenType::close_paren}, [this, &params](){
@@ -650,6 +652,7 @@ Nodes::Method Parser::Parser::parseMethodSig() {
     if (!found)
       error({"Missing Token", "Expected closing parenthesis"});
   }
+
   if (!tryconsume({Tokens::TokenType::semicolon})) {
     int prev_index = variables.size()-1;
     for (auto param : params)
