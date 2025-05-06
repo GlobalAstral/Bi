@@ -123,13 +123,21 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     char* name = (char*)malloc(ident.value.size()*sizeof(char));
     strcpy(name, ident.value.c_str());
     Nodes::Variable* var = new Nodes::Variable{name, t};
+    if (VectorUtils::find<Nodes::Variable>(variables, *var) > -1)
+      error({"Internal Error", "Variable already exists"});
     variables.push_back(*var);
-    nodes.push_back({Nodes::NodeType::var_decl, {.var_decl = var}});
+    Nodes::Node decl = {Nodes::NodeType::var_decl, {.var_decl = var}};
+    
     if (tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
       Nodes::Expression& expr = parseExpr();
       if (*t != *(expr.returnType))
         error({"Type Mismatch", Formatting::format("Cannot assign value of type to variable of different type")});
-      nodes.push_back({Nodes::NodeType::var_set, {.var_set = new Nodes::VarSet{*var, &expr}}});
+      std::vector<Nodes::Node>* temp = new std::vector<Nodes::Node>{};
+      temp->push_back(decl);
+      temp->push_back({Nodes::NodeType::var_set, {.var_set = new Nodes::VarSet{*var, &expr}}});
+      nodes.push_back({Nodes::NodeType::var_init, {.pack = temp}});
+    } else {
+      nodes.push_back(decl);
     }
     tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
   } else if (tryconsume({Tokens::TokenType::Return})) {
@@ -153,6 +161,80 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     if (temp.size() != 1)
       error({"Syntax Error", "Cannot defer multiple statements"});
     defers.push_back(temp.at(0));
+  } else if (tryconsume({Tokens::TokenType::If})) {
+    tryconsume({Tokens::TokenType::open_paren}, {"Missing Token", "Expected '('"});
+    Nodes::Expression& expr = parseExpr();
+    tryconsume({Tokens::TokenType::close_paren}, {"Missing Token", "Expected ')'"});
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* body = new Nodes::Node{};
+    Nodes::Node* second = new Nodes::Node{};
+    *body = temp.at(0);
+    temp.clear();
+    if (tryconsume({Tokens::TokenType::Else})) {
+      parseSingle(temp);
+      if (temp.size() != 1)
+        error({"Syntax Error", "Expected Statement"});
+      *second = temp.at(0);
+    }
+    nodes.push_back({Nodes::NodeType::if_stmt, {.flow_control=new Nodes::FlowControl{&expr, body, new Nodes::Node{}, second}}});
+  } else if (tryconsume({Tokens::TokenType::While})) {
+    tryconsume({Tokens::TokenType::open_paren}, {"Missing Token", "Expected '('"});
+    Nodes::Expression& expr = parseExpr();
+    tryconsume({Tokens::TokenType::close_paren}, {"Missing Token", "Expected ')'"});
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* body = new Nodes::Node{};
+    *body = temp.at(0);
+    temp.clear();
+    nodes.push_back({Nodes::NodeType::while_stmt, {.flow_control = new Nodes::FlowControl{&expr, body}}});
+  } else if (tryconsume({Tokens::TokenType::Do})) {
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* body = new Nodes::Node{};
+    *body = temp.at(0);
+    temp.clear();
+    tryconsume({Tokens::TokenType::While}, {"Missing Token", "Expected 'while'"});
+    tryconsume({Tokens::TokenType::open_paren}, {"Missing Token", "Expected '('"});
+    Nodes::Expression& expr = parseExpr();
+    tryconsume({Tokens::TokenType::close_paren}, {"Missing Token", "Expected ')'"});
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';'"});
+    nodes.push_back({Nodes::NodeType::while_stmt, {.flow_control = new Nodes::FlowControl{&expr, body}}});
+  } else if (tryconsume({Tokens::TokenType::For})) {
+    tryconsume({Tokens::TokenType::open_paren}, {"Missing Token", "Expected '('"});
+    std::vector<Nodes::Node> temp;
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* init = new Nodes::Node{};
+    *init = temp.at(0);
+    temp.clear();
+    if (init->type != Nodes::NodeType::var_init)
+      error({"Syntax Error", "Expected variable initialization"});
+
+    Nodes::Expression& expr = parseExpr();
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected ';' separator"});
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* second = new Nodes::Node{};
+    *second = temp.at(0);
+    temp.clear();
+    tryconsume({Tokens::TokenType::close_paren}, {"Missing Token", "Expected ')'"});
+    parseSingle(temp);
+    if (temp.size() != 1)
+      error({"Syntax Error", "Expected Statement"});
+    Nodes::Node* body = new Nodes::Node{};
+    *body = temp.at(0);
+    temp.clear();
+    variables.erase(variables.begin()+VectorUtils::find(variables, init->u.var_set->var));
+    nodes.push_back({Nodes::NodeType::for_stmt, {.flow_control=new Nodes::FlowControl{&expr, body, init, second}}});
   } else {
     Nodes::Expression& expr = parseExpr();
 

@@ -30,7 +30,7 @@ namespace Nodes {
   };
 
   enum class NodeType {
-    pass, scope, method_decl, var_decl, var_set, returnStmt, asm_code, defer, assign, expression,
+    pass, scope, method_decl, var_decl, var_set, var_init, returnStmt, asm_code, defer, assign, expression, if_stmt, while_stmt, do_while, for_stmt,
   };
 
   struct Scope {
@@ -90,6 +90,13 @@ namespace Nodes {
     Expression* value;
   };
 
+  struct FlowControl {
+    Expression* condition;
+    Node* body;
+    Node* init;
+    Node* second_node;
+  };
+
   struct Node {
     NodeType type;
     union {
@@ -100,6 +107,8 @@ namespace Nodes {
       Expression* expr;
       std::vector<Nodes::AssemblyToken>* asm_code;
       Assign* assign;
+      FlowControl* flow_control;
+      std::vector<Nodes::Node>* pack;
     } u;
 
     std::string toString() const;
