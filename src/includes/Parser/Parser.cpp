@@ -39,6 +39,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     std::vector<Nodes::Node> scope;
     bool notFound = true;
     int prev_index = variables.size()-1;
+    this->inScope = true;
     while (hasPeek()) {
       if (tryconsume({Tokens::TokenType::close_curly})) {
         notFound = false;
@@ -54,6 +55,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     defers.clear();
     variables.erase(variables.begin()+prev_index, variables.end());
     nodes.push_back({Nodes::NodeType::scope, {.scope = new Nodes::Scope{scope}}});
+    this->inScope = false;
   } else if (tryconsume({Tokens::TokenType::ellipsis})) {
     nodes.push_back({Nodes::NodeType::pass});
   } else if (peek().type == Tokens::TokenType::Unary || peek().type == Tokens::TokenType::Binary) {
@@ -144,33 +146,35 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node> &nodes) {
     *toks = optional.value();
     nodes.push_back({Nodes::NodeType::asm_code, {.asm_code = toks}});
   } else if (tryconsume({Tokens::TokenType::Defer})) {
+    if (!this->inScope)
+      error({"Internal Error", "Cannot use defer out of scope"});
     std::vector<Nodes::Node> temp;
     parseSingle(temp);
     if (temp.size() != 1)
       error({"Syntax Error", "Cannot defer multiple statements"});
     defers.push_back(temp.at(0));
-  }
-
-  Nodes::Expression& expr = parseExpr();
-
-  if (tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
-    Nodes::Expression& val = parseExpr();
-    switch (expr.type) {
-      case Nodes::Expression::ExprType::variable:
-      case Nodes::Expression::ExprType::dot_notation:
-      case Nodes::Expression::ExprType::dereference:
-      case Nodes::Expression::ExprType::subscript:
-        nodes.push_back({Nodes::NodeType::assign, {.assign = new Nodes::Assign{&expr, &val}}});
-        break;
-      default:
-        error({"Syntax Error", "Cannot assign to expression."});
-    }
   } else {
-    if (expr.type != Nodes::Expression::ExprType::function_call)
-      error({"Syntax Error", "Expression is non-sense"});
-    nodes.push_back({Nodes::NodeType::expression, {.expr = &expr}});
+    Nodes::Expression& expr = parseExpr();
+
+    if (tryconsume({.type=Tokens::TokenType::symbols, .value="="})) {
+      Nodes::Expression& val = parseExpr();
+      switch (expr.type) {
+        case Nodes::Expression::ExprType::variable:
+        case Nodes::Expression::ExprType::dot_notation:
+        case Nodes::Expression::ExprType::dereference:
+        case Nodes::Expression::ExprType::subscript:
+          nodes.push_back({Nodes::NodeType::assign, {.assign = new Nodes::Assign{&expr, &val}}});
+          break;
+        default:
+          error({"Syntax Error", "Cannot assign to expression."});
+      }
+    } else {
+      if (expr.type != Nodes::Expression::ExprType::function_call)
+        error({"Syntax Error", "Expression is non-sense"});
+      nodes.push_back({Nodes::NodeType::expression, {.expr = &expr}});
+    }
+    tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected Semicolon"});
   }
-  tryconsume({Tokens::TokenType::semicolon}, {"Missing Token", "Expected Semicolon"});
 }
 
 Nodes::Expression& Parser::Parser::parseExpr(bool paren) {

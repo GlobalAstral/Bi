@@ -41,6 +41,7 @@ namespace Parser {
       std::vector<Nodes::Variable> variables{};
       std::vector<Nodes::Operation> operations{};
       std::vector<Nodes::Node> defers{};
+      bool inScope = false;
   };
 
   class AssemblyParser {

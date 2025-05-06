@@ -70,6 +70,6 @@ int main(int argc, char** argv) {
   vector<Nodes::Node> nodes = parser.parse();
 
   cout << endl << "PARSED NODES:" << endl;
-
+  
 	return 0;
 }
