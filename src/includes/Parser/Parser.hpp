@@ -26,7 +26,7 @@ namespace Parser {
 
       Nodes::Type* parseType();
       Nodes::Type* convertFromLiteral(Literals::Literal lit);
-      Nodes::Method parseMethodSig();
+      Nodes::Method parseMethodSig(std::vector<Nodes::Method*>& mtds);
       bool isType();
 
       std::vector<Nodes::Method*>* getMethodsWithArgs(char* name, std::vector<Nodes::Variable*> params);

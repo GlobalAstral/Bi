@@ -114,8 +114,7 @@ void Parser::Parser::parseSingle(std::vector<Nodes::Node*> &nodes) {
     operations.push_back(op);
   } else if (tryconsume({Tokens::TokenType::method})) {
     Nodes::Method* mtd = new Nodes::Method{};
-    *mtd = parseMethodSig();
-    this->methods.push_back(mtd);
+    *mtd = parseMethodSig(this->methods);
     nodes.push_back(new Nodes::Node{Nodes::NodeType::method_decl, {.method_decl = mtd}});
   } else if (isType()) {
     Nodes::Type* t = parseType();
@@ -527,15 +526,16 @@ Nodes::Type* Parser::Parser::parseType() {
     }
     bool found = doUntilFind({Tokens::TokenType::close_curly}, [this, &t](){
       if (tryconsume({Tokens::TokenType::Impl})) {
-        Nodes::Method mtd = parseMethodSig();
+        std::vector<Nodes::Method*> temp;
+        Nodes::Method mtd = parseMethodSig(temp);
         if (mtd.scope == NULL)
           error({"Syntax Error", "Cannot declare method inside struct. Use an interface and implement it instead"});
         for (Nodes::Type* type : t->implementing) {
           bool found = false;
           for (int i = 0; i < type->methods.size(); i++) {
-            if (type->methods[i] == mtd) {
+            if (*(type->methods[i]) == mtd) {
               found = true;
-              type->methods[i].scope = mtd.scope;
+              type->methods[i]->scope = mtd.scope;
             }
           }
           if (!found)
@@ -583,8 +583,7 @@ Nodes::Type* Parser::Parser::parseType() {
     
     tryconsume({Tokens::TokenType::open_curly}, {"Missing Token", "Expected opening curly bracket after interface"});
     bool found = doUntilFind({Tokens::TokenType::close_curly}, [this, &t](){
-      Nodes::Method mtd = parseMethodSig();
-      t->methods.push_back(mtd);
+      Nodes::Method mtd = parseMethodSig(t->methods);
     });
     if (!found)
       error({"Missing Token", "Expected closing curly bracket"});
@@ -629,14 +628,16 @@ Nodes::Type *Parser::Parser::convertFromLiteral(Literals::Literal lit) {
   return ret;
 }
 
-Nodes::Method Parser::Parser::parseMethodSig() {
+Nodes::Method Parser::Parser::parseMethodSig(std::vector<Nodes::Method*>& mtds) {
   bool Inline = tryconsume({Tokens::TokenType::Inline});
   Nodes::Type* retType = parseType();
   Tokens::Token ident = tryconsume({Tokens::TokenType::identifier}, {"Missing Token", "Expected Identifier"});
   ident = applyNamespaces(ident);
   std::vector<Nodes::Variable*> params;
   Nodes::Node* body = new Nodes::Node{};
-  Nodes::Method* mtd = new Nodes::Method{};
+
+  char* buf = (char*)malloc(ident.value.size()*sizeof(char));
+  strcpy(buf, ident.value.c_str());
 
   if (tryconsume({Tokens::TokenType::open_paren})) {
     bool found = doUntilFind({Tokens::TokenType::close_paren}, [this, &params](){
@@ -652,7 +653,10 @@ Nodes::Method Parser::Parser::parseMethodSig() {
     if (!found)
       error({"Missing Token", "Expected closing parenthesis"});
   }
-
+  Nodes::Method* mtd = new Nodes::Method{retType, buf, params, body, Inline};
+  if (VectorUtils::find<Nodes::Method*>(mtds, mtd, [](Nodes::Method* a, Nodes::Method* b){return *a == *b;}) > -1)
+    error({"Internal Error", "Method already exists"});
+  mtds.push_back(mtd);
   if (!tryconsume({Tokens::TokenType::semicolon})) {
     int prev_index = variables.size()-1;
     for (auto param : params)
@@ -663,11 +667,11 @@ Nodes::Method Parser::Parser::parseMethodSig() {
 
     if (temp.size() != 1 || temp.at(0)->type != Nodes::NodeType::scope)
       error({"Syntax Error", "Expected scope as method body"});
-    *body = *(temp.at(0));
+    
+    mtds.back()->scope = temp.at(0);
   }
-  char* buf = (char*)malloc(ident.value.size()*sizeof(char));
-  strcpy(buf, ident.value.c_str());
-  return Nodes::Method{retType, buf, params, body, Inline};
+
+  return *mtd;
 }
 
 Tokens::Token Parser::Parser::null() {
@@ -684,7 +688,7 @@ std::vector<Nodes::Method*>* Parser::Parser::getMethodsWithArgs(char *name, std:
     if (strcmp(mtd->name, name) == 0 && mtd->params.size() == params.size()) {
       bool equal = true;
       for (int i = 0; i < mtd->params.size(); i++) {
-        if (mtd->params[i] != params[i])
+        if (*(mtd->params.at(i)->type) != *(params.at(i)->type))
           equal = false;
       }
       if (equal)

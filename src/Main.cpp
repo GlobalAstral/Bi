@@ -69,8 +69,6 @@ int main(int argc, char** argv) {
   Parser::Parser parser{tokens};
   vector<Nodes::Node*> nodes = parser.parse();
   cout << endl << "PARSED NODES:" << endl;
-  //TODO ADD BOOLS AND MAKE METHOD SIGNATURE AUTOMATICALLY REGISTER METHOD IN PARAMETER VECTOR REFERENCE
-
   
 	return 0;
 }

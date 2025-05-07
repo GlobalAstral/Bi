@@ -21,7 +21,7 @@ namespace Nodes {
     bool mut;
     char* alias;
     std::vector<Variable*> interior;
-    std::vector<Nodes::Method> methods;
+    std::vector<Nodes::Method*> methods;
     std::vector<Type*> implementing;
     Expression* size;
 
