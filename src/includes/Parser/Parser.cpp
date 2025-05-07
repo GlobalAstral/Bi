@@ -280,12 +280,15 @@ Nodes::Expression& Parser::Parser::parseExpr(bool paren) {
       mtd->name = buf;
       std::vector<Nodes::Expression> param_values;
 
-      doUntilFind({Tokens::TokenType::close_paren}, [this, &param_values, &mtd](){
+      bool f_close = doUntilFind({Tokens::TokenType::close_paren}, [this, &param_values, &mtd](){
         Nodes::Expression e = parseExpr();
         e.returnType->mut = false;
         param_values.push_back(e);
         mtd->params.push_back(new Nodes::Variable{.type = e.returnType});
       }, {Tokens::TokenType::comma}, {"Missing Token", "Missing comma between parameters"});
+
+      if (!f_close)
+        error({"Missing Token", "Expected closing parenthesis"});
 
       std::vector<Nodes::Method*>* found = getMethodsWithArgs(mtd->name, mtd->params);
       Nodes::Method* method;
